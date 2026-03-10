@@ -25,7 +25,7 @@
     background-image: linear-gradient(rgba(46,111,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(46,111,255,0.03) 1px, transparent 1px);
     background-size: 40px 40px; pointer-events: none; z-index: 0;
   }
-  .wrapper { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; padding: 16px 28px 12px; gap: 10px; }
+  .wrapper { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; padding: 10px 16px 8px; gap: 6px; }
   .topbar { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; height: 72px; }
   .brand { display: flex; align-items: baseline; gap: 12px; }
   .brand h1 { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; }
@@ -111,40 +111,6 @@
 </head>
 <body>
 <div class="wrapper">
-  <div class="topbar">
-    <div class="brand">
-      <h1>工作排程看板</h1>
-      <span class="sub">工作表1</span>
-    </div>
-    <!-- 中間新聞區 -->
-    <div class="news-center">
-      <div class="news-badge">📡 即時新聞</div>
-      <div class="news-slot">
-        <div class="news-title hidden-below" id="news-a"></div>
-        <div class="news-title visible"      id="news-b">載入新聞中...</div>
-      </div>
-      <div class="news-dots" id="news-dots"></div>
-    </div>
-    <div class="topbar-right">
-      <!-- 天氣 -->
-      <div class="weather-block" id="weather-block">
-        <i class="wi wi-na weather-icon" id="weather-icon"></i>
-        <div class="weather-info">
-          <div class="weather-temp" id="weather-temp">--°C</div>
-          <div class="weather-desc" id="weather-desc">載入中</div>
-          <div class="weather-loc">新北市中和區</div>
-        </div>
-      </div>
-      <!-- 時鐘 -->
-      <div class="clock-block">
-        <div class="clock" id="clock">00:00:00</div>
-        <div class="date-label" id="date-label">—</div>
-      </div>
-      <div class="status-dot" id="status-dot"></div>
-    </div>
-  </div>
-
-  <div class="summary" id="summary"></div>
   <div class="table-container">
     <table id="main-table">
       <thead>
