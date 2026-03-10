@@ -45,9 +45,9 @@
   .status-dot.error { background: var(--red-text); box-shadow: 0 0 8px var(--red-text); animation: none; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 
-  .summary { display: flex; gap: 10px; flex-shrink: 0; }
-  .chip { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 16px; font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; letter-spacing: 0.04em; }
-  .chip .n { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 400; line-height: 1; }
+  .summary { display: flex; gap: 8px; flex-shrink: 0; }
+  .chip { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 4px 12px; font-size: 11px; color: var(--text-dim); display: flex; align-items: center; gap: 6px; letter-spacing: 0.04em; }
+  .chip .n { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 400; line-height: 1; }
   .chip.c-active .n { color: var(--ok-color); }
   .chip.c-warn .n { color: var(--yellow-text); }
   .chip.c-urgent .n { color: var(--red-text); }
@@ -144,12 +144,12 @@
     <table>
       <colgroup>
         <col style="width:50px">
-        <col style="width:140px">
-        <col><!-- 工作項目：自動填滿 -->
         <col style="width:110px">
+        <col><!-- 工作項目：自動填滿 -->
+        <col style="width:100px">
         <col style="width:220px">
-        <col style="width:90px">
-        <col style="width:160px">
+        <col style="width:80px">
+        <col style="width:120px">
       </colgroup>
       <thead>
         <tr>
@@ -167,12 +167,12 @@
       <table style="width:100%;table-layout:fixed">
         <colgroup>
           <col style="width:50px">
-          <col style="width:140px">
-          <col>
           <col style="width:110px">
+          <col>
+          <col style="width:100px">
           <col style="width:220px">
-          <col style="width:90px">
-          <col style="width:160px">
+          <col style="width:80px">
+          <col style="width:120px">
         </colgroup>
         <tbody id="tbody"></tbody>
       </table>
@@ -379,6 +379,14 @@ function renderNewsDots() {
 }
 
 
+// 把 yyyy/m/d 或 yyyy-m-d 轉為 M/D 顯示
+function fmtMD(str) {
+  if (!str || !str.trim()) return '';
+  const m = str.trim().match(/^\d{4}[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if (!m) return str;
+  return `${parseInt(m[1])}/${parseInt(m[2])}`;
+}
+
 function parseDateOnly(str) {
   if (!str || !str.trim()) return null;
   const datePart = str.trim().split(' ')[0].replace(/-/g, '/');
@@ -486,7 +494,7 @@ function renderPage() {
       <td class="cell-dim">${start+i+1}</td>
       <td class="cell-main">${esc(cols[COL.client]||'')}</td>
       <td class="cell-main">${esc(cols[COL.item]||'')}</td>
-      <td class="cell-dim">${esc(cols[COL.packDate]||'')}</td>
+      <td class="cell-dim">${esc(fmtMD(cols[COL.packDate]||''))}</td>
       <td class="cell-dim">${esc(formatDelivery(cols))}${deliveryTag(cols)}</td>
       <td class="cell-dim">${esc(cols[COL.executor]||'')}</td>
       <td class="cell-dim">${esc(cols[COL.reqDate]||'')}</td>
