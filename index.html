@@ -106,7 +106,7 @@
           <th>發包日期</th>
           <th>寄(交)貨日期</th>
           <th>執行人</th>
-          <th>申請單日期</th>
+          <th>備注</th>
           <th>狀態</th>
         </tr>
       </thead>
@@ -149,7 +149,7 @@ const PAGE_SEC = 10;
 const PAGE_SIZE = 15;
 
 // 欄位索引（新欄位順序）
-// A=0客戶 B=1工作項目 C=2發包日期 D=3交貨日期 E=4交貨時間 F=5執行人 G=6申請單日期 H=7狀態 I=8標記
+// A=0客戶 B=1工作項目 C=2發包日期 D=3交貨日期 E=4交貨時間 F=5執行人 G=6備註 H=7狀態 I=8標記
 const COL = { client:0, item:1, packDate:2, delivery:3, deliveryTime:4, executor:5, reqDate:6, status:7, mark:8 };
 
 let countdown = REFRESH_SEC, pageSec = PAGE_SEC;
