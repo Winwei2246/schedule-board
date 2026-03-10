@@ -52,12 +52,12 @@
   .chip.c-warn .n { color: var(--yellow-text); }
   .chip.c-urgent .n { color: var(--red-text); }
   .chip.c-done .n { color: var(--done-color); }
-  .table-container { flex: 1; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; }
+  .table-container { flex: 1; min-height: 0; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; overflow-y: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 17px; table-layout: auto; }
   thead tr { background: var(--header-bg); border-bottom: 1px solid var(--border-bright); }
-  th { padding: 13px 12px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; overflow: hidden; }
+  thead { position: sticky; top: 0; z-index: 2; }
+  th { padding: 13px 12px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
   th:first-child { padding-left: 22px; }
-  .tbody-wrap { flex: 1; overflow: hidden; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
@@ -141,45 +141,24 @@
   </div>
 
   <div class="summary" id="summary"></div>
-    <table>
-      <colgroup>
-        <col style="width:50px">
-        <col style="width:110px">
-        <col><!-- 工作項目：自動 -->
-        <col style="width:80px">
-        <col><!-- 寄交貨日期：自動 -->
-        <col style="width:80px">
-        <col style="width:120px">
-      </colgroup>
+  <div class="table-container">
+    <table id="main-table">
       <thead>
         <tr>
-          <th>#</th>
-          <th>客戶名稱</th>
+          <th style="width:50px">#</th>
+          <th style="width:110px">客戶名稱</th>
           <th>工作項目</th>
-          <th>發包日期</th>
+          <th style="width:80px">發包日期</th>
           <th>寄(交)貨日期</th>
-          <th>執行人</th>
-          <th>備注</th>
+          <th style="width:80px">執行人</th>
+          <th style="width:120px">備注</th>
         </tr>
       </thead>
+      <tbody id="tbody"></tbody>
     </table>
-    <div class="tbody-wrap">
-      <table style="width:100%;table-layout:auto">
-        <colgroup>
-          <col style="width:50px">
-          <col style="width:110px">
-          <col>
-          <col style="width:80px">
-          <col>
-          <col style="width:80px">
-          <col style="width:120px">
-        </colgroup>
-        <tbody id="tbody"></tbody>
-      </table>
-      <div class="state-msg" id="state-msg">
-        <div class="icon">📋</div>
-        <div id="state-text">載入中...</div>
-      </div>
+    <div class="state-msg" id="state-msg">
+      <div class="icon">📋</div>
+      <div id="state-text">載入中...</div>
     </div>
   </div>
 
