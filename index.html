@@ -56,29 +56,29 @@
   .row-yellow td { color: var(--yellow-text); }
   .cell-main { font-weight: 500; font-size: 15px; }
   .cell-dim { color: var(--text-mid); font-size: 13px; }
+  /* 交貨日期警示 */
+  .delivery-urgent { color: var(--red-text) !important; font-weight: 600; }
+  .delivery-warn { color: var(--yellow-text) !important; font-weight: 600; }
+  .delivery-overdue { color: var(--red-text) !important; font-weight: 600; opacity: 0.7; text-decoration: line-through; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; letter-spacing: 0.06em; font-weight: 500; white-space: nowrap; }
   .badge-active { background: rgba(61,232,160,0.12); color: var(--ok-color); border: 1px solid rgba(61,232,160,0.25); }
   .badge-done { background: rgba(74,158,255,0.10); color: var(--done-color); border: 1px solid rgba(74,158,255,0.20); }
   .badge-cancel { background: rgba(82,90,122,0.15); color: var(--cancel-color); border: 1px solid rgba(82,90,122,0.25); text-decoration: line-through; }
-  /* 分頁指示器 */
   .page-dots { display: flex; gap: 6px; align-items: center; }
   .page-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all 0.3s; }
   .page-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
   .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 0 2px; }
-  .next-update { display: flex; align-items: center; gap: 6px; }
   .progress-bar { width: 80px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
   .page-timer-bar { width: 60px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
-  .page-timer-fill { height: 100%; background: var(--ok-color); border-radius: 1px; transition: width 0.1s linear; }
+  .page-timer-fill { height: 100%; background: var(--ok-color); border-radius: 1px; transition: width 1s linear; }
   .state-msg { padding: 60px 0; text-align: center; color: var(--text-dim); font-size: 14px; }
   .state-msg .icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
-  /* 換頁動畫 */
   @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   .page-animate tr { animation: pageIn 0.3s ease both; }
 </style>
 </head>
 <body>
-
 <div class="wrapper">
   <div class="topbar">
     <div class="brand">
@@ -129,11 +129,11 @@
       <span id="page-label" style="font-size:11px;color:var(--text-dim)"></span>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
-      <div class="next-update">
+      <div style="display:flex;align-items:center;gap:6px;">
         換頁
         <div class="page-timer-bar"><div class="page-timer-fill" id="page-timer-fill" style="width:100%"></div></div>
       </div>
-      <div class="next-update">
+      <div style="display:flex;align-items:center;gap:6px;">
         更新
         <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
         <span id="countdown">2m</span>
@@ -144,16 +144,16 @@
 
 <script>
 const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKu2qMbeRi8T9TAB0NMJnQGzjvOihaK1O3k6q0le86p5tg5h7RgB64wCZs78Cd2MkI-2PDbt45h3a4/pub?gid=0&single=true&output=csv';
-const REFRESH_SEC = 120;  // 資料更新間隔（秒）
-const PAGE_SEC = 10;       // 換頁間隔（秒）
-const PAGE_SIZE = 15;      // 每頁幾筆
+const REFRESH_SEC = 120;
+const PAGE_SEC    = 10;
+const PAGE_SIZE   = 15;
 
-let countdown = REFRESH_SEC;
-let pageSec = PAGE_SEC;
-let lastData = null;
-let allRows = [];
+let countdown  = REFRESH_SEC;
+let pageSec    = PAGE_SEC;
+let lastData   = null;
+let allRows    = [];
 let currentPage = 0;
-let totalPages = 1;
+let totalPages  = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
   startClock();
@@ -162,7 +162,7 @@ window.addEventListener('DOMContentLoaded', () => {
   startPageCycle();
 });
 
-// ── 時鐘 ──────────────────────────────────────
+// ── 時鐘 ─────────────────────────────────────
 function startClock() {
   const wd = ['日','一','二','三','四','五','六'];
   function tick() {
@@ -181,7 +181,7 @@ function startRefreshCycle() {
   setInterval(() => {
     countdown--;
     const m = Math.floor(countdown / 60), s = countdown % 60;
-    document.getElementById('countdown').textContent = m > 0 ? `${m}m${s > 0 ? s+'s' : ''}` : `${s}s`;
+    document.getElementById('countdown').textContent = m > 0 ? `${m}m${s > 0 ? s+'s':''}` : `${s}s`;
     document.getElementById('progress-fill').style.width = (countdown / REFRESH_SEC * 100) + '%';
     if (countdown <= 0) { countdown = REFRESH_SEC; fetchData(); }
   }, 1000);
@@ -195,12 +195,50 @@ function startPageCycle() {
     document.getElementById('page-timer-fill').style.width = (pageSec / PAGE_SEC * 100) + '%';
     if (pageSec <= 0) {
       pageSec = PAGE_SEC;
-      if (totalPages > 1) {
-        currentPage = (currentPage + 1) % totalPages;
-        renderPage();
-      }
+      if (totalPages > 1) { currentPage = (currentPage + 1) % totalPages; renderPage(); }
     }
   }, 1000);
+}
+
+// ── 解析日期字串（支援 2026/03/15 或 2026/03/15 PM3:00 等）──
+function parseDate(str) {
+  if (!str) return null;
+  // 只取日期部分（空格前）
+  const datePart = str.trim().split(' ')[0];
+  // 支援 2026/03/15 或 2026-03-15
+  const parts = datePart.split(/[\/\-]/);
+  if (parts.length < 3) return null;
+  const y = parseInt(parts[0]), m = parseInt(parts[1]) - 1, d = parseInt(parts[2]);
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+  return new Date(y, m, d);
+}
+
+// ── 今天的午夜（00:00:00）──
+function today() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+// ── 判斷列的顏色等級 ──
+// 回傳 'red' | 'yellow' | ''
+function getRowMark(cols) {
+  const manualMark = (cols[7] || '').trim().toLowerCase();
+  if (manualMark === 'red') return 'red';
+  if (manualMark === 'yellow') return 'yellow';
+
+  // 自動判斷：只看狀態不是「完成」或「取消」的列
+  const status = (cols[6] || '').trim();
+  if (status === '完成' || status === '取消') return '';
+
+  const deliveryDate = parseDate(cols[3]);
+  if (!deliveryDate) return '';
+
+  const t = today();
+  const diffDays = Math.round((deliveryDate - t) / (1000 * 60 * 60 * 24));
+
+  if (diffDays <= 0) return 'red';    // 當天或已過期
+  if (diffDays === 1) return 'yellow'; // 明天到期（前一天）
+  return '';
 }
 
 // ── Fetch 資料 ────────────────────────────────
@@ -212,9 +250,20 @@ async function fetchData() {
     const text = await res.text();
     const rows = parseCSV(text);
     if (rows.length === 0) throw new Error('empty');
+
+    // 排序：依D欄（寄交貨日期）由近到遠，無日期排最後
+    rows.sort((a, b) => {
+      const da = parseDate(a[3]), db = parseDate(b[3]);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      return da - db;
+    });
+
     lastData = rows;
     allRows = rows;
     totalPages = Math.ceil(allRows.length / PAGE_SIZE);
+    currentPage = 0;
     dot.className = 'status-dot';
     updateSummary(rows);
     updateDots();
@@ -222,7 +271,7 @@ async function fetchData() {
   } catch(e) {
     dot.className = 'status-dot error';
     if (lastData) { allRows = lastData; renderPage(); }
-    else showMsg('⚠ 無法讀取資料');
+    else showMsg('⚠ 無法讀取資料，請確認試算表已公開分享');
     console.error(e);
   }
 }
@@ -234,30 +283,45 @@ function renderPage() {
 
   const start = currentPage * PAGE_SIZE;
   const pageRows = allRows.slice(start, start + PAGE_SIZE);
-
   const tbody = document.getElementById('tbody');
   tbody.className = 'page-animate';
+
   tbody.innerHTML = pageRows.map((cols, i) => {
     const globalIdx = start + i;
-    const client = cols[0]||'', item = cols[1]||'', packDate = cols[2]||'';
-    const delivery = cols[3]||'', executor = cols[4]||'', reqDate = cols[5]||'';
-    const status = (cols[6]||'').trim(), mark = (cols[7]||'').trim().toLowerCase();
-    let rc = '';
-    if (mark === 'red') rc = 'row-red';
-    else if (mark === 'yellow') rc = 'row-yellow';
-    return `<tr class="${rc}" style="animation-delay:${i*0.03}s">
-      <td class="cell-dim">${globalIdx+1}</td>
+    const client   = cols[0] || '';
+    const item     = cols[1] || '';
+    const packDate = cols[2] || '';
+    const delivery = cols[3] || '';
+    const executor = cols[4] || '';
+    const reqDate  = cols[5] || '';
+    const status   = (cols[6] || '').trim();
+    const mark     = getRowMark(cols);
+
+    const rowClass = mark === 'red' ? 'row-red' : mark === 'yellow' ? 'row-yellow' : '';
+
+    // 判斷交貨日期欄的顏色 class
+    let deliveryClass = 'cell-dim';
+    if (mark === 'red')    deliveryClass = 'delivery-urgent';
+    else if (mark === 'yellow') deliveryClass = 'delivery-warn';
+
+    // 已過期加刪除線
+    const deliveryDate = parseDate(delivery);
+    if (deliveryDate && deliveryDate < today() && !['完成','取消'].includes(status)) {
+      deliveryClass = 'delivery-overdue';
+    }
+
+    return `<tr class="${rowClass}" style="animation-delay:${i*0.03}s">
+      <td class="cell-dim">${globalIdx + 1}</td>
       <td class="cell-main">${esc(client)}</td>
       <td class="cell-main">${esc(item)}</td>
       <td class="cell-dim">${esc(packDate)}</td>
-      <td class="cell-dim">${esc(delivery)}</td>
+      <td class="${deliveryClass}">${esc(delivery)}</td>
       <td class="cell-dim">${esc(executor)}</td>
       <td class="cell-dim">${esc(reqDate)}</td>
       <td>${badge(status)}</td>
     </tr>`;
   }).join('');
 
-  // 頁碼標示
   document.getElementById('page-label').textContent =
     totalPages > 1 ? `${currentPage + 1} / ${totalPages}` : '';
   updateDots();
@@ -276,10 +340,12 @@ function updateDots() {
 function updateSummary(rows) {
   let a = 0, w = 0, u = 0, d = 0;
   rows.forEach(cols => {
-    const status = (cols[6]||'').trim(), mark = (cols[7]||'').trim().toLowerCase();
-    if (mark === 'red') u++;
+    const status = (cols[6] || '').trim();
+    const mark = getRowMark(cols);
+    if (status === '完成') d++;
+    else if (status === '取消') {}
+    else if (mark === 'red') u++;
     else if (mark === 'yellow') w++;
-    else if (status === '完成') d++;
     else a++;
   });
   document.getElementById('summary').innerHTML =
@@ -320,7 +386,7 @@ function badge(s) {
   if (!s) return '';
   if (s === '完成') return '<span class="badge badge-done">完成</span>';
   if (s === '取消') return '<span class="badge badge-cancel">取消</span>';
-  return `<span class="badge badge-active">${esc(s)||'進行中'}</span>`;
+  return `<span class="badge badge-active">${esc(s) || '進行中'}</span>`;
 }
 
 function showMsg(text) {
