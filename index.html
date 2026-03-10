@@ -81,7 +81,7 @@
   .badge-cancel { background: rgba(82,90,122,0.15); color: var(--cancel-color); border: 1px solid rgba(82,90,122,0.25); text-decoration: line-through; }
   /* 新聞跑馬燈 */
   /* 新聞中間區塊 */
-  .news-center { flex: 1; margin: 0 28px; overflow: hidden; height: 72px; position: relative; display: flex; flex-direction: column; justify-content: center; }
+  .news-center { flex: 1; min-width: 0; margin: 0 28px; overflow: hidden; position: relative; display: flex; flex-direction: column; justify-content: center; }
   .news-badge { font-size: 10px; color: var(--accent); letter-spacing: 0.12em; font-family: 'Oswald', sans-serif; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
   .news-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.5s ease-in-out infinite; display: inline-block; }
   .news-slot { overflow: hidden; height: 36px; position: relative; }
@@ -94,7 +94,7 @@
   .news-dot.active { background: var(--accent); }
   .page-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all 0.3s; }
   .page-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
-  .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 0 2px; }
+  .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 4px 2px; height: 24px; }
   .progress-bar { width: 80px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
   .page-timer-bar { width: 60px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
