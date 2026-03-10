@@ -53,9 +53,9 @@
   .chip.c-urgent .n { color: var(--red-text); }
   .chip.c-done .n { color: var(--done-color); }
   .table-container { flex: 1; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; }
-  table { width: 100%; border-collapse: collapse; font-size: 17px; }
+  table { width: 100%; border-collapse: collapse; font-size: 17px; table-layout: fixed; }
   thead tr { background: var(--header-bg); border-bottom: 1px solid var(--border-bright); }
-  th { padding: 13px 18px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
+  th { padding: 13px 12px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; overflow: hidden; }
   th:first-child { padding-left: 22px; }
   .tbody-wrap { flex: 1; overflow: hidden; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
@@ -65,12 +65,12 @@
   tbody tr.row-overdue { background: rgba(80,80,90,0.18) !important; border-left: 3px solid rgba(120,120,140,0.4); }
   tbody tr.row-overdue td { color: var(--text-dim); }
   tbody tr.row-yellow { background: var(--yellow-bg) !important; border-left: 3px solid var(--yellow-border); }
-  td { padding: var(--row-py, 18px) 18px; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
+  td { padding: var(--row-py, 18px) 12px; vertical-align: middle; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   td:first-child { padding-left: 22px; }
   .row-red td { color: var(--red-text); }
   .row-yellow td { color: var(--yellow-text); }
-  .cell-main { font-weight: 500; font-size: 17px; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
-  .cell-dim { color: var(--text-mid); font-size: 15px; overflow: hidden; text-overflow: ellipsis; }
+  .cell-main { font-weight: 500; font-size: 17px; }
+  .cell-dim { color: var(--text-mid); font-size: 15px; }
   .delivery-tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
   .tag-overdue  { background: rgba(100,100,120,0.3); color: #8891b0; }
   .tag-today    { background: rgba(220,50,50,0.25); color: #ff5555; }
@@ -142,6 +142,15 @@
 
   <div class="summary" id="summary"></div>
     <table>
+      <colgroup>
+        <col style="width:50px">
+        <col style="width:140px">
+        <col><!-- 工作項目：自動填滿 -->
+        <col style="width:110px">
+        <col style="width:220px">
+        <col style="width:90px">
+        <col style="width:160px">
+      </colgroup>
       <thead>
         <tr>
           <th>#</th>
@@ -151,12 +160,20 @@
           <th>寄(交)貨日期</th>
           <th>執行人</th>
           <th>備注</th>
-          <th>狀態</th>
         </tr>
       </thead>
     </table>
     <div class="tbody-wrap">
-      <table style="width:100%">
+      <table style="width:100%;table-layout:fixed">
+        <colgroup>
+          <col style="width:50px">
+          <col style="width:140px">
+          <col>
+          <col style="width:110px">
+          <col style="width:220px">
+          <col style="width:90px">
+          <col style="width:160px">
+        </colgroup>
         <tbody id="tbody"></tbody>
       </table>
       <div class="state-msg" id="state-msg">
@@ -473,7 +490,6 @@ function renderPage() {
       <td class="cell-dim">${esc(formatDelivery(cols))}${deliveryTag(cols)}</td>
       <td class="cell-dim">${esc(cols[COL.executor]||'')}</td>
       <td class="cell-dim">${esc(cols[COL.reqDate]||'')}</td>
-      <td>${badge(cols[COL.status]||'')}</td>
     </tr>`;
   }).join('');
   document.getElementById('page-label').textContent = totalPages > 1 ? `${currentPage+1} / ${totalPages}` : '';
