@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>工作排程看板</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
 <style>
   :root {
     --bg: #0a0c10; --panel: #111318; --border: #1e2230; --border-bright: #2a3050;
@@ -26,12 +27,24 @@
   .brand { display: flex; align-items: baseline; gap: 12px; }
   .brand h1 { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; }
   .brand .sub { font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em; }
-  .topbar-right { display: flex; align-items: center; gap: 20px; }
+  .topbar-right { display: flex; align-items: center; gap: 24px; }
+
+  /* 天氣區塊 */
+  .weather-block { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-bright); border-radius: 8px; padding: 8px 14px; }
+  .weather-icon { font-size: 28px; line-height: 1; color: #f5c842; }
+  .weather-info { display: flex; flex-direction: column; align-items: flex-start; }
+  .weather-temp { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 400; color: #fff; line-height: 1; }
+  .weather-desc { font-size: 11px; color: var(--text-mid); margin-top: 2px; letter-spacing: 0.04em; }
+  .weather-loc { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+
+  /* 時鐘區塊 */
+  .clock-block { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .clock { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 400; color: #fff; letter-spacing: 0.06em; }
   .date-label { font-size: 12px; color: var(--text-dim); text-align: right; letter-spacing: 0.05em; }
-  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok-color); box-shadow: 0 0 8px var(--ok-color); animation: pulse 2s ease-in-out infinite; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok-color); box-shadow: 0 0 8px var(--ok-color); animation: pulse 2s ease-in-out infinite; flex-shrink: 0; }
   .status-dot.error { background: var(--red-text); box-shadow: 0 0 8px var(--red-text); animation: none; }
   @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
   .summary { display: flex; gap: 10px; flex-shrink: 0; }
   .chip { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 16px; font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; letter-spacing: 0.04em; }
   .chip .n { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 400; line-height: 1; }
@@ -49,6 +62,8 @@
   tbody tr:last-child { border-bottom: none; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
   tbody tr.row-red { background: var(--red-bg) !important; border-left: 3px solid var(--red-border); }
+  tbody tr.row-overdue { background: rgba(80,80,90,0.18) !important; border-left: 3px solid rgba(120,120,140,0.4); }
+  tbody tr.row-overdue td { color: var(--text-dim); }
   tbody tr.row-yellow { background: var(--yellow-bg) !important; border-left: 3px solid var(--yellow-border); }
   td { padding: 14px 18px; vertical-align: middle; line-height: 1.5; }
   td:first-child { padding-left: 22px; }
@@ -57,14 +72,26 @@
   .cell-main { font-weight: 500; font-size: 15px; }
   .cell-dim { color: var(--text-mid); font-size: 13px; }
   .delivery-tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
-  .tag-overdue { background: rgba(220,50,50,0.25); color: #ff5555; }
-  .tag-today   { background: rgba(220,50,50,0.25); color: #ff5555; }
-  .tag-tomorrow{ background: rgba(220,170,30,0.25); color: #f5c842; }
+  .tag-overdue  { background: rgba(100,100,120,0.3); color: #8891b0; }
+  .tag-today    { background: rgba(220,50,50,0.25); color: #ff5555; }
+  .tag-tomorrow { background: rgba(220,170,30,0.25); color: #f5c842; }
   .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; letter-spacing: 0.06em; font-weight: 500; white-space: nowrap; }
   .badge-active { background: rgba(61,232,160,0.12); color: var(--ok-color); border: 1px solid rgba(61,232,160,0.25); }
   .badge-done   { background: rgba(74,158,255,0.10); color: var(--done-color); border: 1px solid rgba(74,158,255,0.20); }
   .badge-cancel { background: rgba(82,90,122,0.15); color: var(--cancel-color); border: 1px solid rgba(82,90,122,0.25); text-decoration: line-through; }
-  .page-dots { display: flex; gap: 6px; align-items: center; }
+  /* 新聞跑馬燈 */
+  /* 新聞中間區塊 */
+  .news-center { flex: 1; margin: 0 28px; overflow: hidden; height: 72px; position: relative; display: flex; flex-direction: column; justify-content: center; }
+  .news-badge { font-size: 10px; color: var(--accent); letter-spacing: 0.12em; font-family: 'Oswald', sans-serif; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .news-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.5s ease-in-out infinite; display: inline-block; }
+  .news-slot { overflow: hidden; height: 36px; position: relative; }
+  .news-title { font-size: 20px; font-weight: 500; color: #fff; letter-spacing: 0.02em; line-height: 36px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: absolute; width: 100%; transition: transform 0.6s cubic-bezier(0.4,0,0.2,1), opacity 0.6s ease; }
+  .news-title.enter  { transform: translateY(36px); opacity: 0; }
+  .news-title.active { transform: translateY(0); opacity: 1; }
+  .news-title.exit   { transform: translateY(-36px); opacity: 0; }
+  .news-dots { display: flex; gap: 4px; margin-top: 5px; }
+  .news-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-bright); transition: background 0.3s; }
+  .news-dot.active { background: var(--accent); }
   .page-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all 0.3s; }
   .page-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
   .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 0 2px; }
@@ -85,8 +112,26 @@
       <h1>工作排程看板</h1>
       <span class="sub">工作表1</span>
     </div>
+    <!-- 中間新聞區 -->
+    <div class="news-center">
+      <div class="news-badge">📡 即時新聞</div>
+      <div class="news-slot">
+        <div class="news-title active" id="news-title">載入新聞中...</div>
+      </div>
+      <div class="news-dots" id="news-dots"></div>
+    </div>
     <div class="topbar-right">
-      <div>
+      <!-- 天氣 -->
+      <div class="weather-block" id="weather-block">
+        <i class="wi wi-na weather-icon" id="weather-icon"></i>
+        <div class="weather-info">
+          <div class="weather-temp" id="weather-temp">--°C</div>
+          <div class="weather-desc" id="weather-desc">載入中</div>
+          <div class="weather-loc">新北市中和區</div>
+        </div>
+      </div>
+      <!-- 時鐘 -->
+      <div class="clock-block">
         <div class="clock" id="clock">00:00:00</div>
         <div class="date-label" id="date-label">—</div>
       </div>
@@ -95,8 +140,6 @@
   </div>
 
   <div class="summary" id="summary"></div>
-
-  <div class="table-container">
     <table>
       <thead>
         <tr>
@@ -144,19 +187,27 @@
 
 <script>
 const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2SvTt9UhNXgMOG2ZapZB4H4j7kvjHxOGbGkAvVvbipbYD3L1B52xmf0jGpbZ1-7D12pqLhzbxcph1/pub?gid=0&single=true&output=csv';
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=24.9934&longitude=121.5020&current=temperature_2m,weathercode,is_day&timezone=Asia/Taipei';
 const REFRESH_SEC = 120;
 const PAGE_SEC = 10;
 const PAGE_SIZE = 15;
+const WEATHER_REFRESH_MS = 30 * 60 * 1000; // 30 分鐘
 
-// 欄位索引（新欄位順序）
-// A=0客戶 B=1工作項目 C=2發包日期 D=3交貨日期 E=4交貨時間 F=5執行人 G=6備註 H=7狀態 I=8標記
+// 欄位索引
 const COL = { client:0, item:1, packDate:2, delivery:3, deliveryTime:4, executor:5, reqDate:6, status:7, mark:8 };
 
 let countdown = REFRESH_SEC, pageSec = PAGE_SEC;
 let lastData = null, allRows = [], currentPage = 0, totalPages = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
-  startClock(); fetchData(); startRefreshCycle(); startPageCycle();
+  startClock();
+  fetchData();
+  fetchWeather();
+  fetchNews();
+  startRefreshCycle();
+  startPageCycle();
+  setInterval(fetchWeather, WEATHER_REFRESH_MS);
+  setInterval(fetchNews, 15 * 60 * 1000);
 });
 
 // ── 時鐘 ──────────────────────────────────────
@@ -196,7 +247,93 @@ function startPageCycle() {
   }, 1000);
 }
 
-// ── 日期解析（只取日期部分）────────────────────
+// ── 天氣 ──────────────────────────────────────
+// WMO weathercode → { wi class, 中文描述, 顏色 }
+function weatherInfo(code, isDay) {
+  const d = isDay ? 'day' : 'night';
+  if (code === 0)           return { cls: `wi-${d}-sunny`,            desc: '晴天',   color: '#f5c842' };
+  if (code <= 2)            return { cls: `wi-${d}-cloudy`,           desc: '多雲',   color: '#90a0c0' };
+  if (code === 3)           return { cls: `wi-cloudy`,                desc: '陰天',   color: '#7080a0' };
+  if (code <= 49)           return { cls: `wi-${d}-fog`,              desc: '霧',     color: '#8090b0' };
+  if (code <= 57)           return { cls: `wi-sprinkle`,              desc: '毛毛雨', color: '#4a9eff' };
+  if (code <= 65)           return { cls: `wi-rain`,                  desc: '雨天',   color: '#4a9eff' };
+  if (code <= 67)           return { cls: `wi-rain-mix`,              desc: '凍雨',   color: '#80c0ff' };
+  if (code <= 77)           return { cls: `wi-snow`,                  desc: '雪',     color: '#c0e0ff' };
+  if (code <= 82)           return { cls: `wi-showers`,               desc: '陣雨',   color: '#4a9eff' };
+  if (code <= 86)           return { cls: `wi-snow`,                  desc: '陣雪',   color: '#c0e0ff' };
+  if (code <= 99)           return { cls: `wi-thunderstorm`,          desc: '雷雨',   color: '#f5c842' };
+  return { cls: 'wi-na', desc: '未知', color: '#525a7a' };
+}
+
+async function fetchWeather() {
+  try {
+    const res = await fetch(WEATHER_URL);
+    const data = await res.json();
+    const cur = data.current;
+    const isDay = cur.is_day === 1;
+    const info = weatherInfo(cur.weathercode, isDay);
+    document.getElementById('weather-icon').className = `wi ${info.cls} weather-icon`;
+    document.getElementById('weather-icon').style.color = info.color;
+    document.getElementById('weather-temp').textContent = `${Math.round(cur.temperature_2m)}°C`;
+    document.getElementById('weather-desc').textContent = info.desc;
+  } catch(e) {
+    document.getElementById('weather-desc').textContent = '無法取得';
+    console.error('weather error', e);
+  }
+}
+
+// ── 新聞垂直切換 ─────────────────────────────
+const NEWS_RSS = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/zhongwen/trad/rss.xml';
+const NEWS_INTERVAL = 30000; // 每則停留 30 秒
+let newsTitles = [];
+let newsIndex = 0;
+let newsTimer = null;
+
+async function fetchNews() {
+  try {
+    const res = await fetch(NEWS_RSS + '&t=' + Date.now());
+    const data = await res.json();
+    if (data.status !== 'ok' || !data.items?.length) return;
+    newsTitles = data.items.slice(0, 10).map(i => i.title);
+    newsIndex = 0;
+    renderNewsDots();
+    showNewsTitle(newsIndex);
+    if (newsTimer) clearInterval(newsTimer);
+    newsTimer = setInterval(() => {
+      newsIndex = (newsIndex + 1) % newsTitles.length;
+      showNewsTitle(newsIndex);
+      renderNewsDots();
+    }, NEWS_INTERVAL);
+  } catch(e) {
+    console.error('news error', e);
+  }
+}
+
+function showNewsTitle(idx) {
+  const slot = document.querySelector('.news-slot');
+  if (!slot || !newsTitles.length) return;
+  // 舊的 exit
+  const old = slot.querySelector('.news-title.active');
+  if (old) { old.classList.remove('active'); old.classList.add('exit'); setTimeout(() => old.remove(), 650); }
+  // 新的 enter → active
+  const el = document.createElement('div');
+  el.className = 'news-title enter';
+  el.textContent = newsTitles[idx];
+  slot.appendChild(el);
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.classList.remove('enter'); el.classList.add('active');
+  }));
+}
+
+function renderNewsDots() {
+  const c = document.getElementById('news-dots');
+  if (!c || !newsTitles.length) return;
+  c.innerHTML = newsTitles.map((_, i) =>
+    `<div class="news-dot ${i === newsIndex ? 'active' : ''}"></div>`
+  ).join('');
+}
+
+
 function parseDateOnly(str) {
   if (!str || !str.trim()) return null;
   const datePart = str.trim().split(' ')[0].replace(/-/g, '/');
@@ -205,8 +342,6 @@ function parseDateOnly(str) {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
 
-// ── 時間字串轉分鐘數（用於精確排序）──────────
-// 支援格式：AM9:00, PM3:00, AM9:30
 function parseTimeMinutes(str) {
   if (!str || !str.trim()) return 0;
   const s = str.trim().toUpperCase();
@@ -219,15 +354,11 @@ function parseTimeMinutes(str) {
   return h * 60 + min;
 }
 
-// ── 今天日期（清除時間）────────────────────────
 function today() {
   const n = new Date();
   return new Date(n.getFullYear(), n.getMonth(), n.getDate());
 }
 
-// ── 列顏色判斷 ────────────────────────────────
-// I欄手動標記優先，空白才用日期自動判斷
-// 完成/取消不亮燈
 function getRowColor(cols) {
   const mark = (cols[COL.mark]||'').trim().toLowerCase();
   if (mark === 'red') return 'red';
@@ -237,12 +368,12 @@ function getRowColor(cols) {
   const delivery = parseDateOnly(cols[COL.delivery]);
   if (!delivery) return '';
   const diff = Math.round((delivery - today()) / 86400000);
-  if (diff <= 0) return 'red';    // 今天或已過期
-  if (diff === 1) return 'yellow'; // 明天
+  if (diff < 0) return 'overdue';  // 已逾期 → 灰底
+  if (diff === 0) return 'red';    // 今天到期 → 紅底
+  if (diff === 1) return 'yellow';
   return '';
 }
 
-// ── 交貨日期標籤 ──────────────────────────────
 function deliveryTag(cols) {
   const mark = (cols[COL.mark]||'').trim().toLowerCase();
   if (mark === 'red' || mark === 'yellow') return '';
@@ -251,13 +382,12 @@ function deliveryTag(cols) {
   const delivery = parseDateOnly(cols[COL.delivery]);
   if (!delivery) return '';
   const diff = Math.round((delivery - today()) / 86400000);
-  if (diff < 0)  return '<span class="delivery-tag tag-overdue">已逾期</span>';
+  if (diff < 0)   return '<span class="delivery-tag tag-overdue">已逾期</span>';
   if (diff === 0) return '<span class="delivery-tag tag-today">今天到期</span>';
   if (diff === 1) return '<span class="delivery-tag tag-tomorrow">明天到期</span>';
   return '';
 }
 
-// ── 合併交貨日期 + 時間顯示 ───────────────────
 function formatDelivery(cols) {
   const date = (cols[COL.delivery]||'').trim();
   const time = (cols[COL.deliveryTime]||'').trim();
@@ -274,8 +404,6 @@ async function fetchData() {
     const text = await res.text();
     const rows = parseCSV(text);
     if (rows.length === 0) throw new Error('empty');
-
-    // 依交貨日期 + 時間排序（近到遠，無日期排最後）
     rows.sort((a, b) => {
       const da = parseDateOnly(a[COL.delivery]);
       const db = parseDateOnly(b[COL.delivery]);
@@ -283,10 +411,8 @@ async function fetchData() {
       if (!da) return 1;
       if (!db) return -1;
       if (da.getTime() !== db.getTime()) return da - db;
-      // 同日期再依時間排
       return parseTimeMinutes(a[COL.deliveryTime]) - parseTimeMinutes(b[COL.deliveryTime]);
     });
-
     lastData = rows; allRows = rows;
     totalPages = Math.ceil(allRows.length / PAGE_SIZE);
     currentPage = 0;
@@ -310,7 +436,7 @@ function renderPage() {
   tbody.className = 'page-animate';
   tbody.innerHTML = pageRows.map((cols, i) => {
     const color = getRowColor(cols);
-    const rc = color === 'red' ? 'row-red' : color === 'yellow' ? 'row-yellow' : '';
+    const rc = color === 'red' ? 'row-red' : color === 'yellow' ? 'row-yellow' : color === 'overdue' ? 'row-overdue' : '';
     return `<tr class="${rc}" style="animation-delay:${i*0.03}s">
       <td class="cell-dim">${start+i+1}</td>
       <td class="cell-main">${esc(cols[COL.client]||'')}</td>
@@ -326,7 +452,6 @@ function renderPage() {
   updateDots();
 }
 
-// ── 分頁圓點 ──────────────────────────────────
 function updateDots() {
   const c = document.getElementById('page-dots');
   if (totalPages <= 1) { c.innerHTML = ''; return; }
@@ -334,7 +459,6 @@ function updateDots() {
     `<div class="page-dot ${i===currentPage?'active':''}"></div>`).join('');
 }
 
-// ── 統計 chips ────────────────────────────────
 function updateSummary(rows) {
   let a=0, w=0, u=0, d=0;
   rows.forEach(cols => {
@@ -342,6 +466,7 @@ function updateSummary(rows) {
     const status = (cols[COL.status]||'').trim();
     if (status === '完成') d++;
     else if (status === '取消') {}
+    else if (color === 'overdue') {} // 逾期不計入緊急
     else if (color === 'red') u++;
     else if (color === 'yellow') w++;
     else a++;
@@ -354,7 +479,6 @@ function updateSummary(rows) {
      <div class="chip c-done">完成 <span class="n">${d}</span></div>`;
 }
 
-// ── CSV 解析 ──────────────────────────────────
 function parseCSV(text) {
   const rows = [];
   const lines = text.split('\n');
