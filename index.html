@@ -7,98 +7,123 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
 <style>
-  :root { --bg:#0a0c10;--panel:#111318;--border:#1e2230;--border-bright:#2a3050;--text:#dde2f0;--text-dim:#525a7a;--text-mid:#8891b0;--accent:#2e6fff;--header-bg:#141829;--row-alt:rgba(255,255,255,0.018);--red-bg:rgba(220,50,50,0.12);--red-text:#ff5555;--red-border:rgba(220,50,50,0.35);--yellow-bg:rgba(220,170,30,0.10);--yellow-text:#f5c842;--yellow-border:rgba(220,170,30,0.30);--ok-color:#3de8a0;--done-color:#4a9eff;--cancel-color:#525a7a; }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:'Noto Sans TC',sans-serif;overflow:hidden}
-  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(46,111,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(46,111,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
-  .wrapper{position:relative;z-index:1;display:flex;flex-direction:column;height:100vh;padding:14px 28px 10px;gap:8px}
-  .topbar{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;height:72px}
-  .brand{display:flex;align-items:baseline;gap:12px}
-  .brand h1{font-family:'Oswald',sans-serif;font-size:22px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#fff}
-  .brand .sub{font-size:12px;color:var(--text-dim);letter-spacing:0.06em}
-  .topbar-right{display:flex;align-items:center;gap:24px}
-  .weather-block{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.04);border:1px solid var(--border-bright);border-radius:8px;padding:8px 14px}
-  .weather-icon{font-size:28px;line-height:1;color:#f5c842}
-  .weather-info{display:flex;flex-direction:column;align-items:flex-start}
-  .weather-temp{font-family:'Oswald',sans-serif;font-size:22px;font-weight:400;color:#fff;line-height:1}
-  .weather-desc{font-size:11px;color:var(--text-mid);margin-top:2px;letter-spacing:0.04em}
-  .weather-loc{font-size:10px;color:var(--text-dim);margin-top:1px}
-  .clock-block{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
-  .clock{font-family:'Oswald',sans-serif;font-size:28px;font-weight:400;color:#fff;letter-spacing:0.06em}
-  .date-label{font-size:12px;color:var(--text-dim);text-align:right;letter-spacing:0.05em}
-  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--ok-color);box-shadow:0 0 8px var(--ok-color);animation:pulse 2s ease-in-out infinite;flex-shrink:0}
-  .status-dot.error{background:var(--red-text);box-shadow:0 0 8px var(--red-text);animation:none}
-  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
-  .summary{display:flex;gap:10px;flex-shrink:0}
-  .chip{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:5px 14px;font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:8px;letter-spacing:0.04em}
-  .chip .n{font-family:'Oswald',sans-serif;font-size:17px;font-weight:400;line-height:1}
-  .chip.c-active .n{color:var(--ok-color)}.chip.c-warn .n{color:var(--yellow-text)}.chip.c-urgent .n{color:var(--red-text)}.chip.c-done .n{color:var(--done-color)}
-  .table-container{flex:1;min-height:0;overflow:hidden;background:var(--panel);border:1px solid var(--border-bright);border-radius:10px;display:flex;flex-direction:column}
-  table{width:100%;border-collapse:collapse;font-size:15px}
-  thead tr{background:var(--header-bg);border-bottom:1px solid var(--border-bright)}
-  th{padding:12px 18px;text-align:left;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-dim);font-weight:500;white-space:nowrap;font-family:'Oswald',sans-serif}
-  th:first-child{padding-left:22px}
-  .tbody-wrap{flex:1;overflow:hidden}
-  tbody tr{border-bottom:1px solid var(--border);transition:background 0.2s}
-  tbody tr:last-child{border-bottom:none}
-  tbody tr:nth-child(even){background:var(--row-alt)}
-  tbody tr.row-red{background:var(--red-bg)!important;border-left:3px solid var(--red-border)}
-  tbody tr.row-overdue{background:rgba(80,80,90,0.18)!important;border-left:3px solid rgba(120,120,140,0.4)}
-  tbody tr.row-overdue td{color:var(--text-dim)}
-  tbody tr.row-yellow{background:var(--yellow-bg)!important;border-left:3px solid var(--yellow-border)}
-  td{padding:13px 18px;vertical-align:middle;line-height:1.5}
-  td:first-child{padding-left:22px}
-  .row-red td{color:var(--red-text)}.row-yellow td{color:var(--yellow-text)}
-  .cell-main{font-weight:500;font-size:15px}.cell-dim{color:var(--text-mid);font-size:13px}
-  .delivery-tag{display:inline-block;font-size:10px;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:middle}
-  .tag-overdue{background:rgba(100,100,120,0.3);color:#8891b0}
-  .tag-today{background:rgba(220,50,50,0.25);color:#ff5555}
-  .tag-tomorrow{background:rgba(220,170,30,0.25);color:#f5c842}
-  .badge{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;letter-spacing:0.06em;font-weight:500;white-space:nowrap}
-  .badge-active{background:rgba(61,232,160,0.12);color:var(--ok-color);border:1px solid rgba(61,232,160,0.25)}
-  .badge-done{background:rgba(74,158,255,0.10);color:var(--done-color);border:1px solid rgba(74,158,255,0.20)}
-  .badge-cancel{background:rgba(82,90,122,0.15);color:var(--cancel-color);border:1px solid rgba(82,90,122,0.25);text-decoration:line-through}
-  /* 新聞區塊 */
-  .news-center{flex:1;min-width:0;margin:0 28px;overflow:hidden;position:relative;display:flex;flex-direction:column;justify-content:center}
-  .news-badge{font-size:10px;color:var(--accent);letter-spacing:0.12em;font-family:'Oswald',sans-serif;margin-bottom:4px;display:flex;align-items:center;gap:6px}
-  .news-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 6px var(--accent);animation:pulse 1.5s ease-in-out infinite;display:inline-block}
-  .news-slot{overflow:hidden;height:36px;position:relative}
-  /* 新聞標題：用兩個固定 div 交替顯示，不動態新增 */
-  .news-title{font-size:20px;font-weight:500;color:#fff;letter-spacing:0.02em;line-height:36px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:absolute;width:100%;top:0;transition:transform 0.5s ease,opacity 0.5s ease}
-  .news-title.hidden-below{transform:translateY(36px);opacity:0;pointer-events:none}
-  .news-title.hidden-above{transform:translateY(-36px);opacity:0;pointer-events:none}
-  .news-title.visible{transform:translateY(0);opacity:1}
-  .news-dots{display:flex;gap:4px;margin-top:4px}
-  .news-dot{width:4px;height:4px;border-radius:50%;background:var(--border-bright);transition:background 0.3s}
-  .news-dot.active{background:var(--accent)}
-  .page-dots{display:flex;gap:6px;align-items:center}
-  .page-dot{width:6px;height:6px;border-radius:50%;background:var(--border-bright);transition:all 0.3s}
-  .page-dot.active{background:var(--accent);width:18px;border-radius:3px}
-  .footer{flex-shrink:0;display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--text-dim);letter-spacing:0.05em;height:20px}
-  .progress-bar{width:80px;height:2px;background:var(--border);border-radius:1px;overflow:hidden}
-  .progress-fill{height:100%;background:var(--accent);border-radius:1px;transition:width 1s linear}
-  .page-timer-bar{width:60px;height:2px;background:var(--border);border-radius:1px;overflow:hidden}
-  .page-timer-fill{height:100%;background:var(--ok-color);border-radius:1px;transition:width 1s linear}
-  .state-msg{padding:60px 0;text-align:center;color:var(--text-dim);font-size:14px}
-  .state-msg .icon{font-size:32px;margin-bottom:10px;opacity:0.4}
-  @keyframes pageIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-  .page-animate tr{animation:pageIn 0.3s ease both}
+  :root {
+    --bg: #0a0c10; --panel: #111318; --border: #1e2230; --border-bright: #2a3050;
+    --text: #dde2f0; --text-dim: #525a7a; --text-mid: #8891b0; --accent: #2e6fff;
+    --header-bg: #141829; --row-alt: rgba(255,255,255,0.018);
+    --red-bg: rgba(220,50,50,0.12); --red-text: #ff5555; --red-border: rgba(220,50,50,0.35);
+    --yellow-bg: rgba(220,170,30,0.10); --yellow-text: #f5c842; --yellow-border: rgba(220,170,30,0.30);
+    --ok-color: #3de8a0; --done-color: #4a9eff; --cancel-color: #525a7a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: var(--bg); color: var(--text); font-family: 'Noto Sans TC', sans-serif; overflow: hidden; }
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background-image: linear-gradient(rgba(46,111,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(46,111,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px; pointer-events: none; z-index: 0;
+  }
+  .wrapper { position: relative; z-index: 1; display: flex; flex-direction: column; height: 100vh; padding: 16px 28px 12px; gap: 10px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; height: 72px; }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand h1 { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #fff; }
+  .brand .sub { font-size: 12px; color: var(--text-dim); letter-spacing: 0.06em; }
+  .topbar-right { display: flex; align-items: center; gap: 24px; }
+
+  /* 天氣區塊 */
+  .weather-block { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-bright); border-radius: 8px; padding: 8px 14px; }
+  .weather-icon { font-size: 28px; line-height: 1; color: #f5c842; }
+  .weather-info { display: flex; flex-direction: column; align-items: flex-start; }
+  .weather-temp { font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 400; color: #fff; line-height: 1; }
+  .weather-desc { font-size: 11px; color: var(--text-mid); margin-top: 2px; letter-spacing: 0.04em; }
+  .weather-loc { font-size: 10px; color: var(--text-dim); margin-top: 1px; }
+
+  /* 時鐘區塊 */
+  .clock-block { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .clock { font-family: 'Oswald', sans-serif; font-size: 28px; font-weight: 400; color: #fff; letter-spacing: 0.06em; }
+  .date-label { font-size: 12px; color: var(--text-dim); text-align: right; letter-spacing: 0.05em; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok-color); box-shadow: 0 0 8px var(--ok-color); animation: pulse 2s ease-in-out infinite; flex-shrink: 0; }
+  .status-dot.error { background: var(--red-text); box-shadow: 0 0 8px var(--red-text); animation: none; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+  .summary { display: flex; gap: 10px; flex-shrink: 0; }
+  .chip { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 6px 16px; font-size: 12px; color: var(--text-dim); display: flex; align-items: center; gap: 8px; letter-spacing: 0.04em; }
+  .chip .n { font-family: 'Oswald', sans-serif; font-size: 18px; font-weight: 400; line-height: 1; }
+  .chip.c-active .n { color: var(--ok-color); }
+  .chip.c-warn .n { color: var(--yellow-text); }
+  .chip.c-urgent .n { color: var(--red-text); }
+  .chip.c-done .n { color: var(--done-color); }
+  .table-container { flex: 1; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  thead tr { background: var(--header-bg); border-bottom: 1px solid var(--border-bright); }
+  th { padding: 13px 18px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
+  th:first-child { padding-left: 22px; }
+  .tbody-wrap { flex: 1; overflow: hidden; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:nth-child(even) { background: var(--row-alt); }
+  tbody tr.row-red { background: var(--red-bg) !important; border-left: 3px solid var(--red-border); }
+  tbody tr.row-overdue { background: rgba(80,80,90,0.18) !important; border-left: 3px solid rgba(120,120,140,0.4); }
+  tbody tr.row-overdue td { color: var(--text-dim); }
+  tbody tr.row-yellow { background: var(--yellow-bg) !important; border-left: 3px solid var(--yellow-border); }
+  td { padding: var(--row-py, 14px) 18px; vertical-align: middle; line-height: 1.4; white-space: nowrap; }
+  td:first-child { padding-left: 22px; }
+  .row-red td { color: var(--red-text); }
+  .row-yellow td { color: var(--yellow-text); }
+  .cell-main { font-weight: 500; font-size: 15px; overflow: hidden; text-overflow: ellipsis; max-width: 320px; }
+  .cell-dim { color: var(--text-mid); font-size: 13px; overflow: hidden; text-overflow: ellipsis; }
+  .delivery-tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+  .tag-overdue  { background: rgba(100,100,120,0.3); color: #8891b0; }
+  .tag-today    { background: rgba(220,50,50,0.25); color: #ff5555; }
+  .tag-tomorrow { background: rgba(220,170,30,0.25); color: #f5c842; }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 4px; font-size: 11px; letter-spacing: 0.06em; font-weight: 500; white-space: nowrap; }
+  .badge-active { background: rgba(61,232,160,0.12); color: var(--ok-color); border: 1px solid rgba(61,232,160,0.25); }
+  .badge-done   { background: rgba(74,158,255,0.10); color: var(--done-color); border: 1px solid rgba(74,158,255,0.20); }
+  .badge-cancel { background: rgba(82,90,122,0.15); color: var(--cancel-color); border: 1px solid rgba(82,90,122,0.25); text-decoration: line-through; }
+  /* 新聞跑馬燈 */
+  /* 新聞中間區塊 */
+  .news-center { flex: 1; min-width: 0; margin: 0 28px; overflow: hidden; position: relative; display: flex; flex-direction: column; justify-content: center; }
+  .news-badge { font-size: 10px; color: var(--accent); letter-spacing: 0.12em; font-family: 'Oswald', sans-serif; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+  .news-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); animation: pulse 1.5s ease-in-out infinite; display: inline-block; }
+  .news-slot { overflow: hidden; height: 36px; position: relative; }
+  .news-title { font-size: 20px; font-weight: 500; color: #fff; letter-spacing: 0.02em; line-height: 36px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: absolute; width: 100%; top: 0; transition: transform 0.5s ease, opacity 0.5s ease; }
+  .news-title.hidden-below { transform: translateY(36px);  opacity: 0; pointer-events: none; }
+  .news-title.hidden-above { transform: translateY(-36px); opacity: 0; pointer-events: none; }
+  .news-title.visible      { transform: translateY(0);     opacity: 1; }
+  .news-dots { display: flex; gap: 4px; margin-top: 5px; }
+  .news-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-bright); transition: background 0.3s; }
+  .news-dot.active { background: var(--accent); }
+  .page-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all 0.3s; }
+  .page-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
+  .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 4px 2px; height: 24px; }
+  .progress-bar { width: 80px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
+  .page-timer-bar { width: 60px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .page-timer-fill { height: 100%; background: var(--ok-color); border-radius: 1px; transition: width 1s linear; }
+  .state-msg { padding: 60px 0; text-align: center; color: var(--text-dim); font-size: 14px; }
+  .state-msg .icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .page-animate tr { animation: pageIn 0.3s ease both; }
 </style>
 </head>
 <body>
 <div class="wrapper">
   <div class="topbar">
-    <div class="brand"><h1>工作排程看板</h1><span class="sub">工作表1</span></div>
+    <div class="brand">
+      <h1>工作排程看板</h1>
+      <span class="sub">工作表1</span>
+    </div>
+    <!-- 中間新聞區 -->
     <div class="news-center">
       <div class="news-badge">📡 即時新聞</div>
       <div class="news-slot">
         <div class="news-title hidden-below" id="news-a"></div>
-        <div class="news-title visible" id="news-b">載入新聞中...</div>
+        <div class="news-title visible"      id="news-b">載入新聞中...</div>
       </div>
       <div class="news-dots" id="news-dots"></div>
     </div>
     <div class="topbar-right">
-      <div class="weather-block">
+      <!-- 天氣 -->
+      <div class="weather-block" id="weather-block">
         <i class="wi wi-na weather-icon" id="weather-icon"></i>
         <div class="weather-info">
           <div class="weather-temp" id="weather-temp">--°C</div>
@@ -106,6 +131,7 @@
           <div class="weather-loc">新北市中和區</div>
         </div>
       </div>
+      <!-- 時鐘 -->
       <div class="clock-block">
         <div class="clock" id="clock">00:00:00</div>
         <div class="date-label" id="date-label">—</div>
@@ -113,17 +139,33 @@
       <div class="status-dot" id="status-dot"></div>
     </div>
   </div>
+
   <div class="summary" id="summary"></div>
-  <div class="table-container">
-    <table><thead><tr>
-      <th>#</th><th>客戶名稱</th><th>工作項目</th><th>發包日期</th>
-      <th>寄(交)貨日期</th><th>執行人</th><th>備注</th><th>狀態</th>
-    </tr></thead></table>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>客戶名稱</th>
+          <th>工作項目</th>
+          <th>發包日期</th>
+          <th>寄(交)貨日期</th>
+          <th>執行人</th>
+          <th>備注</th>
+          <th>狀態</th>
+        </tr>
+      </thead>
+    </table>
     <div class="tbody-wrap">
-      <table style="width:100%"><tbody id="tbody"></tbody></table>
-      <div class="state-msg" id="state-msg"><div class="icon">📋</div><div id="state-text">載入中...</div></div>
+      <table style="width:100%">
+        <tbody id="tbody"></tbody>
+      </table>
+      <div class="state-msg" id="state-msg">
+        <div class="icon">📋</div>
+        <div id="state-text">載入中...</div>
+      </div>
     </div>
   </div>
+
   <div class="footer">
     <div style="display:flex;align-items:center;gap:12px;">
       陸格發包大圖工作表
@@ -131,68 +173,381 @@
       <span id="page-label" style="font-size:11px;color:var(--text-dim)"></span>
     </div>
     <div style="display:flex;align-items:center;gap:16px;">
-      <div style="display:flex;align-items:center;gap:6px;">換頁 <div class="page-timer-bar"><div class="page-timer-fill" id="page-timer-fill" style="width:100%"></div></div></div>
-      <div style="display:flex;align-items:center;gap:6px;">更新 <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div><span id="countdown">2m</span></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        換頁
+        <div class="page-timer-bar"><div class="page-timer-fill" id="page-timer-fill" style="width:100%"></div></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        更新
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
+        <span id="countdown">2m</span>
+      </div>
     </div>
   </div>
 </div>
+
 <script>
-const PUB_CSV_URL='https://docs.google.com/spreadsheets/d/e/2PACX-1vT2SvTt9UhNXgMOG2ZapZB4H4j7kvjHxOGbGkAvVvbipbYD3L1B52xmf0jGpbZ1-7D12pqLhzbxcph1/pub?gid=0&single=true&output=csv';
-const WEATHER_URL='https://api.open-meteo.com/v1/forecast?latitude=24.9934&longitude=121.5020&current=temperature_2m,weathercode,is_day&timezone=Asia/Taipei';
-const REFRESH_SEC=120,PAGE_SEC=10,PAGE_SIZE=15,WEATHER_REFRESH_MS=30*60*1000;
-const COL={client:0,item:1,packDate:2,delivery:3,deliveryTime:4,executor:5,reqDate:6,status:7,mark:8};
-let countdown=REFRESH_SEC,pageSec=PAGE_SEC,lastData=null,allRows=[],currentPage=0,totalPages=1;
-let newsTitles=[],newsIndex=0,newsTimer=null;
-// 兩個固定 div 交替顯示，避免重疊問題
-let newsActive='b'; // 'a' or 'b' — 目前顯示中的那個
-const NEWS_RSS='https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/zhongwen/trad/rss.xml';
-const NEWS_INTERVAL=30000;
-window.addEventListener('DOMContentLoaded',()=>{startClock();fetchData();fetchWeather();fetchNews();startRefreshCycle();startPageCycle();setInterval(fetchWeather,WEATHER_REFRESH_MS);setInterval(fetchNews,15*60*1000);});
-function startClock(){const wd=['日','一','二','三','四','五','六'];function tick(){const n=new Date();document.getElementById('clock').textContent=[n.getHours(),n.getMinutes(),n.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':');document.getElementById('date-label').textContent=n.getFullYear()+'/'+String(n.getMonth()+1).padStart(2,'0')+'/'+String(n.getDate()).padStart(2,'0')+' （'+wd[n.getDay()]+'）';}tick();setInterval(tick,1000);}
-function startRefreshCycle(){countdown=REFRESH_SEC;setInterval(()=>{countdown--;const m=Math.floor(countdown/60),s=countdown%60;document.getElementById('countdown').textContent=m>0?m+'m'+(s>0?s+'s':''):s+'s';document.getElementById('progress-fill').style.width=(countdown/REFRESH_SEC*100)+'%';if(countdown<=0){countdown=REFRESH_SEC;fetchData();}},1000);}
-function startPageCycle(){pageSec=PAGE_SEC;setInterval(()=>{pageSec--;document.getElementById('page-timer-fill').style.width=(pageSec/PAGE_SEC*100)+'%';if(pageSec<=0){pageSec=PAGE_SEC;if(totalPages>1){currentPage=(currentPage+1)%totalPages;renderPage();}}},1000);}
-function weatherInfo(code,isDay){const d=isDay?'day':'night';if(code===0)return{cls:'wi-'+d+'-sunny',desc:'晴天',color:'#f5c842'};if(code<=2)return{cls:'wi-'+d+'-cloudy',desc:'多雲',color:'#90a0c0'};if(code===3)return{cls:'wi-cloudy',desc:'陰天',color:'#7080a0'};if(code<=49)return{cls:'wi-'+d+'-fog',desc:'霧',color:'#8090b0'};if(code<=57)return{cls:'wi-sprinkle',desc:'毛毛雨',color:'#4a9eff'};if(code<=65)return{cls:'wi-rain',desc:'雨天',color:'#4a9eff'};if(code<=67)return{cls:'wi-rain-mix',desc:'凍雨',color:'#80c0ff'};if(code<=77)return{cls:'wi-snow',desc:'雪',color:'#c0e0ff'};if(code<=82)return{cls:'wi-showers',desc:'陣雨',color:'#4a9eff'};if(code<=86)return{cls:'wi-snow',desc:'陣雪',color:'#c0e0ff'};if(code<=99)return{cls:'wi-thunderstorm',desc:'雷雨',color:'#f5c842'};return{cls:'wi-na',desc:'未知',color:'#525a7a'};}
-async function fetchWeather(){try{const res=await fetch(WEATHER_URL);const data=await res.json();const cur=data.current;const isDay=cur.is_day===1;const info=weatherInfo(cur.weathercode,isDay);document.getElementById('weather-icon').className='wi '+info.cls+' weather-icon';document.getElementById('weather-icon').style.color=info.color;document.getElementById('weather-temp').textContent=Math.round(cur.temperature_2m)+'°C';document.getElementById('weather-desc').textContent=info.desc;}catch(e){document.getElementById('weather-desc').textContent='無法取得';}}
-async function fetchNews(){try{const res=await fetch(NEWS_RSS+'&t='+Date.now());const data=await res.json();if(data.status!=='ok'||!data.items?.length)return;newsTitles=data.items.slice(0,10).map(i=>i.title);newsIndex=0;renderNewsDots();showNewsTitle(newsIndex,false);if(newsTimer)clearInterval(newsTimer);newsTimer=setInterval(()=>{newsIndex=(newsIndex+1)%newsTitles.length;showNewsTitle(newsIndex,true);renderNewsDots();},NEWS_INTERVAL);}catch(e){console.error('news',e);}}
-function showNewsTitle(idx,animate){
-  if(!newsTitles.length)return;
-  const elA=document.getElementById('news-a');
-  const elB=document.getElementById('news-b');
-  const incoming=newsActive==='b'?elA:elB;
-  const outgoing=newsActive==='b'?elB:elA;
-  incoming.textContent=newsTitles[idx];
-  if(!animate){
-    // 第一次：直接顯示，不動畫
-    outgoing.className='news-title hidden-above';
-    incoming.className='news-title visible';
-    newsActive=newsActive==='b'?'a':'b';
-    return;
-  }
-  // 準備 incoming 在下方待機
-  incoming.className='news-title hidden-below';
-  // 強制回流讓 transition 生效
-  incoming.getBoundingClientRect();
-  // 同步觸發：outgoing 飛上去，incoming 從下飛入
-  outgoing.className='news-title hidden-above';
-  incoming.className='news-title visible';
-  newsActive=newsActive==='b'?'a':'b';
+const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2SvTt9UhNXgMOG2ZapZB4H4j7kvjHxOGbGkAvVvbipbYD3L1B52xmf0jGpbZ1-7D12pqLhzbxcph1/pub?gid=0&single=true&output=csv';
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=24.9934&longitude=121.5020&current=temperature_2m,weathercode,is_day&timezone=Asia/Taipei';
+const REFRESH_SEC = 120;
+const PAGE_SEC = 10;
+const PAGE_SIZE = 15;
+const WEATHER_REFRESH_MS = 30 * 60 * 1000; // 30 分鐘
+
+// 欄位索引
+const COL = { client:0, item:1, packDate:2, delivery:3, deliveryTime:4, executor:5, reqDate:6, status:7, mark:8 };
+
+let countdown = REFRESH_SEC, pageSec = PAGE_SEC;
+let lastData = null, allRows = [], currentPage = 0, totalPages = 1;
+
+window.addEventListener('DOMContentLoaded', () => {
+  startClock();
+  fetchData();
+  fetchWeather();
+  fetchNews();
+  startRefreshCycle();
+  startPageCycle();
+  setInterval(fetchWeather, WEATHER_REFRESH_MS);
+  setInterval(fetchNews, 15 * 60 * 1000);
+  adjustRowHeight();
+  window.addEventListener('resize', adjustRowHeight);
+});
+
+// ── 自動調整列高，讓 PAGE_SIZE 列剛好填滿表格區 ──
+function adjustRowHeight() {
+  // tbody-wrap 是 flex:1 的容器，量它的實際高度
+  const wrap = document.querySelector('.tbody-wrap');
+  if (!wrap) return;
+  const available = wrap.clientHeight;
+  // thead 高度（固定）
+  const thead = document.querySelector('thead tr');
+  const theadH = thead ? thead.getBoundingClientRect().height : 44;
+  // 每列可用高度
+  const rowH = Math.floor((available) / PAGE_SIZE);
+  // font-size 15px，line-height 1.4 = 21px，上下各留 padding
+  const py = Math.max(4, Math.floor((rowH - 21) / 2));
+  document.documentElement.style.setProperty('--row-py', py + 'px');
 }
-function renderNewsDots(){const c=document.getElementById('news-dots');if(!c||!newsTitles.length)return;c.innerHTML=newsTitles.map((_,i)=>'<div class="news-dot'+(i===newsIndex?' active':'')+'"></div>').join('');}
-function parseDateOnly(str){if(!str||!str.trim())return null;const datePart=str.trim().split(' ')[0].replace(/-/g,'/');const d=new Date(datePart);if(isNaN(d.getTime()))return null;return new Date(d.getFullYear(),d.getMonth(),d.getDate());}
-function parseTimeMinutes(str){if(!str||!str.trim())return 0;const s=str.trim().toUpperCase();const match=s.match(/^(AM|PM)(\d{1,2}):(\d{2})$/);if(!match)return 0;let h=parseInt(match[2]);const min=parseInt(match[3]);if(match[1]==='PM'&&h!==12)h+=12;if(match[1]==='AM'&&h===12)h=0;return h*60+min;}
-function today(){const n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());}
-function getRowColor(cols){const mark=(cols[COL.mark]||'').trim().toLowerCase();if(mark==='red')return'red';if(mark==='yellow')return'yellow';const status=(cols[COL.status]||'').trim();if(status==='完成'||status==='取消')return'';const delivery=parseDateOnly(cols[COL.delivery]);if(!delivery)return'';const diff=Math.round((delivery-today())/86400000);if(diff<0)return'overdue';if(diff===0)return'red';if(diff===1)return'yellow';return'';}
-function deliveryTag(cols){const mark=(cols[COL.mark]||'').trim().toLowerCase();if(mark==='red'||mark==='yellow')return'';const status=(cols[COL.status]||'').trim();if(status==='完成'||status==='取消')return'';const delivery=parseDateOnly(cols[COL.delivery]);if(!delivery)return'';const diff=Math.round((delivery-today())/86400000);if(diff<0)return'<span class="delivery-tag tag-overdue">已逾期</span>';if(diff===0)return'<span class="delivery-tag tag-today">今天到期</span>';if(diff===1)return'<span class="delivery-tag tag-tomorrow">明天到期</span>';return'';}
-function formatDelivery(cols){const date=(cols[COL.delivery]||'').trim();const time=(cols[COL.deliveryTime]||'').trim();if(!date)return'';return time?date+' '+time:date;}
-async function fetchData(){const dot=document.getElementById('status-dot');try{const res=await fetch(PUB_CSV_URL+'&t='+Date.now());if(!res.ok)throw new Error('HTTP '+res.status);const text=await res.text();const rows=parseCSV(text);if(rows.length===0)throw new Error('empty');rows.sort((a,b)=>{const da=parseDateOnly(a[COL.delivery]);const db=parseDateOnly(b[COL.delivery]);if(!da&&!db)return 0;if(!da)return 1;if(!db)return-1;if(da.getTime()!==db.getTime())return da-db;return parseTimeMinutes(a[COL.deliveryTime])-parseTimeMinutes(b[COL.deliveryTime]);});lastData=rows;allRows=rows;totalPages=Math.ceil(allRows.length/PAGE_SIZE);currentPage=0;dot.className='status-dot';updateSummary(rows);updateDots();renderPage();}catch(e){dot.className='status-dot error';if(lastData){allRows=lastData;renderPage();}else showMsg('⚠ 無法讀取資料');console.error(e);}}
-function renderPage(){if(!allRows.length){showMsg('尚無資料');return;}document.getElementById('state-msg').style.display='none';const start=currentPage*PAGE_SIZE;const pageRows=allRows.slice(start,start+PAGE_SIZE);const tbody=document.getElementById('tbody');tbody.className='page-animate';tbody.innerHTML=pageRows.map((cols,i)=>{const color=getRowColor(cols);const rc=color==='red'?'row-red':color==='yellow'?'row-yellow':color==='overdue'?'row-overdue':'';return'<tr class="'+rc+'" style="animation-delay:'+(i*0.03)+'s"><td class="cell-dim">'+(start+i+1)+'</td><td class="cell-main">'+esc(cols[COL.client]||'')+'</td><td class="cell-main">'+esc(cols[COL.item]||'')+'</td><td class="cell-dim">'+esc(cols[COL.packDate]||'')+'</td><td class="cell-dim">'+esc(formatDelivery(cols))+deliveryTag(cols)+'</td><td class="cell-dim">'+esc(cols[COL.executor]||'')+'</td><td class="cell-dim">'+esc(cols[COL.reqDate]||'')+'</td><td>'+badge(cols[COL.status]||'')+'</td></tr>';}).join('');document.getElementById('page-label').textContent=totalPages>1?(currentPage+1)+' / '+totalPages:'';updateDots();}
-function updateDots(){const c=document.getElementById('page-dots');if(totalPages<=1){c.innerHTML='';return;}c.innerHTML=Array.from({length:totalPages},(_,i)=>'<div class="page-dot'+(i===currentPage?' active':'')+'"></div>').join('');}
-function updateSummary(rows){let a=0,w=0,u=0,d=0;rows.forEach(cols=>{const color=getRowColor(cols);const status=(cols[COL.status]||'').trim();if(status==='完成')d++;else if(status==='取消'){}else if(color==='overdue'){}else if(color==='red')u++;else if(color==='yellow')w++;else a++;});document.getElementById('summary').innerHTML='<div class="chip">總計 <span class="n" style="color:var(--text)">'+rows.length+'</span> 筆</div><div class="chip c-active">進行中 <span class="n">'+a+'</span></div><div class="chip c-warn">注意 <span class="n">'+w+'</span></div><div class="chip c-urgent">緊急 <span class="n">'+u+'</span></div><div class="chip c-done">完成 <span class="n">'+d+'</span></div>';}
-function parseCSV(text){const rows=[];const lines=text.split('\n');for(let i=1;i<lines.length;i++){const line=lines[i].trim();if(!line)continue;const cols=splitCSVLine(line);if(cols.every(c=>!c.trim()))continue;rows.push(cols);}return rows;}
-function splitCSVLine(line){const cols=[];let cur='',inQ=false;for(let i=0;i<line.length;i++){const ch=line[i];if(ch==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(ch===','&&!inQ){cols.push(cur.trim());cur='';}else cur+=ch;}cols.push(cur.trim());return cols;}
-function badge(s){if(!s)return'';if(s==='完成')return'<span class="badge badge-done">完成</span>';if(s==='取消')return'<span class="badge badge-cancel">取消</span>';return'<span class="badge badge-active">'+esc(s||'進行中')+'</span>';}
-function showMsg(text){document.getElementById('state-text').textContent=text;document.getElementById('state-msg').style.display='block';document.getElementById('tbody').innerHTML='';document.getElementById('summary').innerHTML='';}
-function esc(s){return s?s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'):''}
+
+// ── 時鐘 ──────────────────────────────────────
+function startClock() {
+  const wd = ['日','一','二','三','四','五','六'];
+  function tick() {
+    const n = new Date();
+    document.getElementById('clock').textContent =
+      [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2,'0')).join(':');
+    document.getElementById('date-label').textContent =
+      `${n.getFullYear()}/${String(n.getMonth()+1).padStart(2,'0')}/${String(n.getDate()).padStart(2,'0')} （${wd[n.getDay()]}）`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ── 倒數計時 ──────────────────────────────────
+function startRefreshCycle() {
+  countdown = REFRESH_SEC;
+  setInterval(() => {
+    countdown--;
+    const m = Math.floor(countdown/60), s = countdown%60;
+    document.getElementById('countdown').textContent = m > 0 ? `${m}m${s>0?s+'s':''}` : `${s}s`;
+    document.getElementById('progress-fill').style.width = (countdown/REFRESH_SEC*100)+'%';
+    if (countdown <= 0) { countdown = REFRESH_SEC; fetchData(); }
+  }, 1000);
+}
+
+function startPageCycle() {
+  pageSec = PAGE_SEC;
+  setInterval(() => {
+    pageSec--;
+    document.getElementById('page-timer-fill').style.width = (pageSec/PAGE_SEC*100)+'%';
+    if (pageSec <= 0) {
+      pageSec = PAGE_SEC;
+      if (totalPages > 1) { currentPage = (currentPage+1) % totalPages; renderPage(); }
+    }
+  }, 1000);
+}
+
+// ── 天氣 ──────────────────────────────────────
+// WMO weathercode → { wi class, 中文描述, 顏色 }
+function weatherInfo(code, isDay) {
+  const d = isDay ? 'day' : 'night';
+  if (code === 0)           return { cls: `wi-${d}-sunny`,            desc: '晴天',   color: '#f5c842' };
+  if (code <= 2)            return { cls: `wi-${d}-cloudy`,           desc: '多雲',   color: '#90a0c0' };
+  if (code === 3)           return { cls: `wi-cloudy`,                desc: '陰天',   color: '#7080a0' };
+  if (code <= 49)           return { cls: `wi-${d}-fog`,              desc: '霧',     color: '#8090b0' };
+  if (code <= 57)           return { cls: `wi-sprinkle`,              desc: '毛毛雨', color: '#4a9eff' };
+  if (code <= 65)           return { cls: `wi-rain`,                  desc: '雨天',   color: '#4a9eff' };
+  if (code <= 67)           return { cls: `wi-rain-mix`,              desc: '凍雨',   color: '#80c0ff' };
+  if (code <= 77)           return { cls: `wi-snow`,                  desc: '雪',     color: '#c0e0ff' };
+  if (code <= 82)           return { cls: `wi-showers`,               desc: '陣雨',   color: '#4a9eff' };
+  if (code <= 86)           return { cls: `wi-snow`,                  desc: '陣雪',   color: '#c0e0ff' };
+  if (code <= 99)           return { cls: `wi-thunderstorm`,          desc: '雷雨',   color: '#f5c842' };
+  return { cls: 'wi-na', desc: '未知', color: '#525a7a' };
+}
+
+async function fetchWeather() {
+  try {
+    const res = await fetch(WEATHER_URL);
+    const data = await res.json();
+    const cur = data.current;
+    const isDay = cur.is_day === 1;
+    const info = weatherInfo(cur.weathercode, isDay);
+    document.getElementById('weather-icon').className = `wi ${info.cls} weather-icon`;
+    document.getElementById('weather-icon').style.color = info.color;
+    document.getElementById('weather-temp').textContent = `${Math.round(cur.temperature_2m)}°C`;
+    document.getElementById('weather-desc').textContent = info.desc;
+  } catch(e) {
+    document.getElementById('weather-desc').textContent = '無法取得';
+    console.error('weather error', e);
+  }
+}
+
+// ── 新聞垂直切換 ─────────────────────────────
+const NEWS_RSS = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/zhongwen/trad/rss.xml';
+const NEWS_INTERVAL = 30000; // 每則停留 30 秒
+let newsTitles = [];
+let newsIndex = 0;
+let newsTimer = null;
+let newsActive = 'b'; // 目前顯示中的 div，'a' 或 'b'
+
+async function fetchNews() {
+  try {
+    const res = await fetch(NEWS_RSS + '&t=' + Date.now());
+    const data = await res.json();
+    if (data.status !== 'ok' || !data.items?.length) return;
+    newsTitles = data.items.slice(0, 10).map(i => i.title);
+    newsIndex = 0;
+    renderNewsDots();
+    showNewsTitle(newsIndex, false);
+    if (newsTimer) clearInterval(newsTimer);
+    newsTimer = setInterval(() => {
+      newsIndex = (newsIndex + 1) % newsTitles.length;
+      showNewsTitle(newsIndex);
+      renderNewsDots();
+    }, NEWS_INTERVAL);
+  } catch(e) {
+    console.error('news error', e);
+  }
+}
+
+function showNewsTitle(idx, animate = true) {
+  if (!newsTitles.length) return;
+  const elA = document.getElementById('news-a');
+  const elB = document.getElementById('news-b');
+  const incoming = newsActive === 'b' ? elA : elB;
+  const outgoing  = newsActive === 'b' ? elB : elA;
+
+  incoming.textContent = newsTitles[idx];
+
+  if (!animate) {
+    // 第一次載入：直接顯示，不播動畫
+    outgoing.className  = 'news-title hidden-above';
+    incoming.className  = 'news-title visible';
+  } else {
+    // 把 incoming 放到下方待機，強制 reflow 後再同步觸發
+    incoming.className  = 'news-title hidden-below';
+    incoming.getBoundingClientRect(); // force reflow
+    outgoing.className  = 'news-title hidden-above';
+    incoming.className  = 'news-title visible';
+  }
+
+  newsActive = newsActive === 'b' ? 'a' : 'b';
+}
+
+function renderNewsDots() {
+  const c = document.getElementById('news-dots');
+  if (!c || !newsTitles.length) return;
+  c.innerHTML = newsTitles.map((_, i) =>
+    `<div class="news-dot ${i === newsIndex ? 'active' : ''}"></div>`
+  ).join('');
+}
+
+
+function parseDateOnly(str) {
+  if (!str || !str.trim()) return null;
+  const datePart = str.trim().split(' ')[0].replace(/-/g, '/');
+  const d = new Date(datePart);
+  if (isNaN(d.getTime())) return null;
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function parseTimeMinutes(str) {
+  if (!str || !str.trim()) return 0;
+  const s = str.trim().toUpperCase();
+  const match = s.match(/^(AM|PM)(\d{1,2}):(\d{2})$/);
+  if (!match) return 0;
+  let h = parseInt(match[2]);
+  const min = parseInt(match[3]);
+  if (match[1] === 'PM' && h !== 12) h += 12;
+  if (match[1] === 'AM' && h === 12) h = 0;
+  return h * 60 + min;
+}
+
+function today() {
+  const n = new Date();
+  return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+}
+
+function getRowColor(cols) {
+  const mark = (cols[COL.mark]||'').trim().toLowerCase();
+  if (mark === 'red') return 'red';
+  if (mark === 'yellow') return 'yellow';
+  const status = (cols[COL.status]||'').trim();
+  if (status === '完成' || status === '取消') return '';
+  const delivery = parseDateOnly(cols[COL.delivery]);
+  if (!delivery) return '';
+  const diff = Math.round((delivery - today()) / 86400000);
+  if (diff < 0) return 'overdue';  // 已逾期 → 灰底
+  if (diff === 0) return 'red';    // 今天到期 → 紅底
+  if (diff === 1) return 'yellow';
+  return '';
+}
+
+function deliveryTag(cols) {
+  const mark = (cols[COL.mark]||'').trim().toLowerCase();
+  if (mark === 'red' || mark === 'yellow') return '';
+  const status = (cols[COL.status]||'').trim();
+  if (status === '完成' || status === '取消') return '';
+  const delivery = parseDateOnly(cols[COL.delivery]);
+  if (!delivery) return '';
+  const diff = Math.round((delivery - today()) / 86400000);
+  if (diff < 0)   return '<span class="delivery-tag tag-overdue">已逾期</span>';
+  if (diff === 0) return '<span class="delivery-tag tag-today">今天到期</span>';
+  if (diff === 1) return '<span class="delivery-tag tag-tomorrow">明天到期</span>';
+  return '';
+}
+
+function formatDelivery(cols) {
+  const date = (cols[COL.delivery]||'').trim();
+  const time = (cols[COL.deliveryTime]||'').trim();
+  if (!date) return '';
+  return time ? `${date} ${time}` : date;
+}
+
+// ── Fetch 資料 ────────────────────────────────
+async function fetchData() {
+  const dot = document.getElementById('status-dot');
+  try {
+    const res = await fetch(PUB_CSV_URL + '&t=' + Date.now());
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const rows = parseCSV(text);
+    if (rows.length === 0) throw new Error('empty');
+    rows.sort((a, b) => {
+      const da = parseDateOnly(a[COL.delivery]);
+      const db = parseDateOnly(b[COL.delivery]);
+      if (!da && !db) return 0;
+      if (!da) return 1;
+      if (!db) return -1;
+      if (da.getTime() !== db.getTime()) return da - db;
+      return parseTimeMinutes(a[COL.deliveryTime]) - parseTimeMinutes(b[COL.deliveryTime]);
+    });
+    lastData = rows; allRows = rows;
+    totalPages = Math.ceil(allRows.length / PAGE_SIZE);
+    currentPage = 0;
+    dot.className = 'status-dot';
+    updateSummary(rows); updateDots(); renderPage();
+  } catch(e) {
+    dot.className = 'status-dot error';
+    if (lastData) { allRows = lastData; renderPage(); }
+    else showMsg('⚠ 無法讀取資料');
+    console.error(e);
+  }
+}
+
+// ── 渲染當前頁 ────────────────────────────────
+function renderPage() {
+  if (!allRows.length) { showMsg('尚無資料'); return; }
+  document.getElementById('state-msg').style.display = 'none';
+  const start = currentPage * PAGE_SIZE;
+  const pageRows = allRows.slice(start, start + PAGE_SIZE);
+  const tbody = document.getElementById('tbody');
+  tbody.className = 'page-animate';
+  tbody.innerHTML = pageRows.map((cols, i) => {
+    const color = getRowColor(cols);
+    const rc = color === 'red' ? 'row-red' : color === 'yellow' ? 'row-yellow' : color === 'overdue' ? 'row-overdue' : '';
+    return `<tr class="${rc}" style="animation-delay:${i*0.03}s">
+      <td class="cell-dim">${start+i+1}</td>
+      <td class="cell-main">${esc(cols[COL.client]||'')}</td>
+      <td class="cell-main">${esc(cols[COL.item]||'')}</td>
+      <td class="cell-dim">${esc(cols[COL.packDate]||'')}</td>
+      <td class="cell-dim">${esc(formatDelivery(cols))}${deliveryTag(cols)}</td>
+      <td class="cell-dim">${esc(cols[COL.executor]||'')}</td>
+      <td class="cell-dim">${esc(cols[COL.reqDate]||'')}</td>
+      <td>${badge(cols[COL.status]||'')}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('page-label').textContent = totalPages > 1 ? `${currentPage+1} / ${totalPages}` : '';
+  updateDots();
+}
+
+function updateDots() {
+  const c = document.getElementById('page-dots');
+  if (totalPages <= 1) { c.innerHTML = ''; return; }
+  c.innerHTML = Array.from({length: totalPages}, (_,i) =>
+    `<div class="page-dot ${i===currentPage?'active':''}"></div>`).join('');
+}
+
+function updateSummary(rows) {
+  let a=0, w=0, u=0, d=0;
+  rows.forEach(cols => {
+    const color = getRowColor(cols);
+    const status = (cols[COL.status]||'').trim();
+    if (status === '完成') d++;
+    else if (status === '取消') {}
+    else if (color === 'overdue') {} // 逾期不計入緊急
+    else if (color === 'red') u++;
+    else if (color === 'yellow') w++;
+    else a++;
+  });
+  document.getElementById('summary').innerHTML =
+    `<div class="chip">總計 <span class="n" style="color:var(--text)">${rows.length}</span> 筆</div>
+     <div class="chip c-active">進行中 <span class="n">${a}</span></div>
+     <div class="chip c-warn">注意 <span class="n">${w}</span></div>
+     <div class="chip c-urgent">緊急 <span class="n">${u}</span></div>
+     <div class="chip c-done">完成 <span class="n">${d}</span></div>`;
+}
+
+function parseCSV(text) {
+  const rows = [];
+  const lines = text.split('\n');
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const cols = splitCSVLine(line);
+    if (cols.every(c => !c.trim())) continue;
+    rows.push(cols);
+  }
+  return rows;
+}
+
+function splitCSVLine(line) {
+  const cols=[]; let cur='', inQ=false;
+  for (let i=0; i<line.length; i++) {
+    const ch=line[i];
+    if (ch==='"') { if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ; }
+    else if (ch===','&&!inQ) { cols.push(cur.trim()); cur=''; }
+    else cur+=ch;
+  }
+  cols.push(cur.trim()); return cols;
+}
+
+function badge(s) {
+  if (!s) return '';
+  if (s==='完成') return '<span class="badge badge-done">完成</span>';
+  if (s==='取消') return '<span class="badge badge-cancel">取消</span>';
+  return `<span class="badge badge-active">${esc(s)||'進行中'}</span>`;
+}
+
+function showMsg(text) {
+  document.getElementById('state-text').textContent = text;
+  document.getElementById('state-msg').style.display = 'block';
+  document.getElementById('tbody').innerHTML = '';
+  document.getElementById('summary').innerHTML = '';
+}
+
+function esc(s) {
+  return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+}
 </script>
 </body>
 </html>
