@@ -44,13 +44,10 @@
   thead tr { background: var(--header-bg); border-bottom: 1px solid var(--border-bright); }
   th { padding: 13px 18px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
   th:first-child { padding-left: 22px; }
-  .tbody-wrap { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-bright) transparent; scroll-behavior: smooth; }
-  .tbody-wrap::-webkit-scrollbar { width: 4px; }
-  .tbody-wrap::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
-  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; animation: fadeIn 0.4s ease both; }
+  .tbody-wrap { flex: 1; overflow: hidden; }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:nth-child(even) { background: var(--row-alt); }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
   tbody tr.row-red { background: var(--red-bg) !important; border-left: 3px solid var(--red-border); }
   tbody tr.row-yellow { background: var(--yellow-bg) !important; border-left: 3px solid var(--yellow-border); }
   td { padding: 14px 18px; vertical-align: middle; line-height: 1.5; }
@@ -63,14 +60,21 @@
   .badge-active { background: rgba(61,232,160,0.12); color: var(--ok-color); border: 1px solid rgba(61,232,160,0.25); }
   .badge-done { background: rgba(74,158,255,0.10); color: var(--done-color); border: 1px solid rgba(74,158,255,0.20); }
   .badge-cancel { background: rgba(82,90,122,0.15); color: var(--cancel-color); border: 1px solid rgba(82,90,122,0.25); text-decoration: line-through; }
+  /* 分頁指示器 */
+  .page-dots { display: flex; gap: 6px; align-items: center; }
+  .page-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all 0.3s; }
+  .page-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
   .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 0 2px; }
   .next-update { display: flex; align-items: center; gap: 6px; }
   .progress-bar { width: 80px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
-  .scroll-indicator { font-size: 10px; color: var(--text-dim); opacity: 0; transition: opacity 0.3s; }
-  .scroll-indicator.visible { opacity: 1; }
+  .page-timer-bar { width: 60px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .page-timer-fill { height: 100%; background: var(--ok-color); border-radius: 1px; transition: width 0.1s linear; }
   .state-msg { padding: 60px 0; text-align: center; color: var(--text-dim); font-size: 14px; }
   .state-msg .icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
+  /* 換頁動畫 */
+  @keyframes pageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .page-animate tr { animation: pageIn 0.3s ease both; }
 </style>
 </head>
 <body>
@@ -107,7 +111,7 @@
         </tr>
       </thead>
     </table>
-    <div class="tbody-wrap" id="tbody-wrap">
+    <div class="tbody-wrap">
       <table style="width:100%">
         <tbody id="tbody"></tbody>
       </table>
@@ -119,34 +123,43 @@
   </div>
 
   <div class="footer">
-    <div style="display:flex;align-items:center;gap:10px;">
+    <div style="display:flex;align-items:center;gap:12px;">
       陸格發包大圖工作表
-      <span class="scroll-indicator" id="scroll-indicator">▼ 自動捲動中</span>
+      <div class="page-dots" id="page-dots"></div>
+      <span id="page-label" style="font-size:11px;color:var(--text-dim)"></span>
     </div>
-    <div class="next-update">
-      下次更新
-      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
-      <span id="countdown">2m</span>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <div class="next-update">
+        換頁
+        <div class="page-timer-bar"><div class="page-timer-fill" id="page-timer-fill" style="width:100%"></div></div>
+      </div>
+      <div class="next-update">
+        更新
+        <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
+        <span id="countdown">2m</span>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
 const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKu2qMbeRi8T9TAB0NMJnQGzjvOihaK1O3k6q0le86p5tg5h7RgB64wCZs78Cd2MkI-2PDbt45h3a4/pub?gid=0&single=true&output=csv';
-const REFRESH_SEC = 120; // 2 分鐘更新一次
-const SCROLL_INTERVAL = 5000; // 每 5 秒捲動一次
-const SCROLL_STEP = 120; // 每次捲動像素
+const REFRESH_SEC = 120;  // 資料更新間隔（秒）
+const PAGE_SEC = 10;       // 換頁間隔（秒）
+const PAGE_SIZE = 15;      // 每頁幾筆
 
 let countdown = REFRESH_SEC;
-let lastData = null; // 保留上一次成功的資料
-let scrollTimer = null;
-let isScrolling = false;
+let pageSec = PAGE_SEC;
+let lastData = null;
+let allRows = [];
+let currentPage = 0;
+let totalPages = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
   startClock();
   fetchData();
   startRefreshCycle();
-  startAutoScroll();
+  startPageCycle();
 });
 
 // ── 時鐘 ──────────────────────────────────────
@@ -154,52 +167,40 @@ function startClock() {
   const wd = ['日','一','二','三','四','五','六'];
   function tick() {
     const n = new Date();
-    const hms = [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2,'0')).join(':');
-    document.getElementById('clock').textContent = hms;
+    document.getElementById('clock').textContent =
+      [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2,'0')).join(':');
     document.getElementById('date-label').textContent =
       `${n.getFullYear()}/${String(n.getMonth()+1).padStart(2,'0')}/${String(n.getDate()).padStart(2,'0')} （${wd[n.getDay()]}）`;
   }
-  tick();
-  setInterval(tick, 1000);
+  tick(); setInterval(tick, 1000);
 }
 
-// ── 更新倒數 ──────────────────────────────────
+// ── 資料更新倒數 ──────────────────────────────
 function startRefreshCycle() {
   countdown = REFRESH_SEC;
-  updateCountdown();
   setInterval(() => {
     countdown--;
-    updateCountdown();
+    const m = Math.floor(countdown / 60), s = countdown % 60;
+    document.getElementById('countdown').textContent = m > 0 ? `${m}m${s > 0 ? s+'s' : ''}` : `${s}s`;
+    document.getElementById('progress-fill').style.width = (countdown / REFRESH_SEC * 100) + '%';
     if (countdown <= 0) { countdown = REFRESH_SEC; fetchData(); }
   }, 1000);
 }
 
-function updateCountdown() {
-  const m = Math.floor(countdown / 60);
-  const s = countdown % 60;
-  document.getElementById('countdown').textContent = m > 0 ? `${m}m${s > 0 ? s+'s' : ''}` : `${s}s`;
-  document.getElementById('progress-fill').style.width = (countdown / REFRESH_SEC * 100) + '%';
-}
-
-// ── 自動捲動 ──────────────────────────────────
-function startAutoScroll() {
-  scrollTimer = setInterval(() => {
-    const wrap = document.getElementById('tbody-wrap');
-    const maxScroll = wrap.scrollHeight - wrap.clientHeight;
-    if (maxScroll <= 0) {
-      // 不需要捲動（全部都看得到）
-      document.getElementById('scroll-indicator').classList.remove('visible');
-      return;
+// ── 換頁倒數 ──────────────────────────────────
+function startPageCycle() {
+  pageSec = PAGE_SEC;
+  setInterval(() => {
+    pageSec--;
+    document.getElementById('page-timer-fill').style.width = (pageSec / PAGE_SEC * 100) + '%';
+    if (pageSec <= 0) {
+      pageSec = PAGE_SEC;
+      if (totalPages > 1) {
+        currentPage = (currentPage + 1) % totalPages;
+        renderPage();
+      }
     }
-    document.getElementById('scroll-indicator').classList.add('visible');
-    const current = wrap.scrollTop;
-    if (current + wrap.clientHeight >= wrap.scrollHeight - 10) {
-      // 到底了，回到頂部
-      wrap.scrollTo({ top: 0, behavior: 'smooth' });
-    } else {
-      wrap.scrollBy({ top: SCROLL_STEP, behavior: 'smooth' });
-    }
-  }, SCROLL_INTERVAL);
+  }, 1000);
 }
 
 // ── Fetch 資料 ────────────────────────────────
@@ -211,19 +212,82 @@ async function fetchData() {
     const text = await res.text();
     const rows = parseCSV(text);
     if (rows.length === 0) throw new Error('empty');
-    lastData = rows; // 成功才更新快取
+    lastData = rows;
+    allRows = rows;
+    totalPages = Math.ceil(allRows.length / PAGE_SIZE);
     dot.className = 'status-dot';
-    renderTable(rows);
+    updateSummary(rows);
+    updateDots();
+    renderPage();
   } catch(e) {
     dot.className = 'status-dot error';
-    if (lastData) {
-      // 失敗時保留上次資料，不清空畫面
-      renderTable(lastData);
-    } else {
-      showMsg('⚠ 無法讀取資料，請確認試算表已公開分享');
-    }
+    if (lastData) { allRows = lastData; renderPage(); }
+    else showMsg('⚠ 無法讀取資料');
     console.error(e);
   }
+}
+
+// ── 渲染當前頁 ────────────────────────────────
+function renderPage() {
+  if (!allRows.length) { showMsg('尚無資料'); return; }
+  document.getElementById('state-msg').style.display = 'none';
+
+  const start = currentPage * PAGE_SIZE;
+  const pageRows = allRows.slice(start, start + PAGE_SIZE);
+
+  const tbody = document.getElementById('tbody');
+  tbody.className = 'page-animate';
+  tbody.innerHTML = pageRows.map((cols, i) => {
+    const globalIdx = start + i;
+    const client = cols[0]||'', item = cols[1]||'', packDate = cols[2]||'';
+    const delivery = cols[3]||'', executor = cols[4]||'', reqDate = cols[5]||'';
+    const status = (cols[6]||'').trim(), mark = (cols[7]||'').trim().toLowerCase();
+    let rc = '';
+    if (mark === 'red') rc = 'row-red';
+    else if (mark === 'yellow') rc = 'row-yellow';
+    return `<tr class="${rc}" style="animation-delay:${i*0.03}s">
+      <td class="cell-dim">${globalIdx+1}</td>
+      <td class="cell-main">${esc(client)}</td>
+      <td class="cell-main">${esc(item)}</td>
+      <td class="cell-dim">${esc(packDate)}</td>
+      <td class="cell-dim">${esc(delivery)}</td>
+      <td class="cell-dim">${esc(executor)}</td>
+      <td class="cell-dim">${esc(reqDate)}</td>
+      <td>${badge(status)}</td>
+    </tr>`;
+  }).join('');
+
+  // 頁碼標示
+  document.getElementById('page-label').textContent =
+    totalPages > 1 ? `${currentPage + 1} / ${totalPages}` : '';
+  updateDots();
+}
+
+// ── 分頁圓點 ──────────────────────────────────
+function updateDots() {
+  const container = document.getElementById('page-dots');
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+  container.innerHTML = Array.from({length: totalPages}, (_, i) =>
+    `<div class="page-dot ${i === currentPage ? 'active' : ''}"></div>`
+  ).join('');
+}
+
+// ── 統計 chips ────────────────────────────────
+function updateSummary(rows) {
+  let a = 0, w = 0, u = 0, d = 0;
+  rows.forEach(cols => {
+    const status = (cols[6]||'').trim(), mark = (cols[7]||'').trim().toLowerCase();
+    if (mark === 'red') u++;
+    else if (mark === 'yellow') w++;
+    else if (status === '完成') d++;
+    else a++;
+  });
+  document.getElementById('summary').innerHTML =
+    `<div class="chip">總計 <span class="n" style="color:var(--text)">${rows.length}</span> 筆</div>
+     <div class="chip c-active">進行中 <span class="n">${a}</span></div>
+     <div class="chip c-warn">注意 <span class="n">${w}</span></div>
+     <div class="chip c-urgent">緊急 <span class="n">${u}</span></div>
+     <div class="chip c-done">完成 <span class="n">${d}</span></div>`;
 }
 
 // ── CSV 解析 ──────────────────────────────────
@@ -250,39 +314,6 @@ function splitCSVLine(line) {
   }
   cols.push(cur.trim());
   return cols;
-}
-
-// ── 渲染表格 ──────────────────────────────────
-function renderTable(rows) {
-  if (!rows.length) { showMsg('尚無資料'); return; }
-  document.getElementById('state-msg').style.display = 'none';
-  let a = 0, w = 0, u = 0, d = 0;
-  document.getElementById('tbody').innerHTML = rows.map((cols, i) => {
-    const client = cols[0]||'', item = cols[1]||'', packDate = cols[2]||'';
-    const delivery = cols[3]||'', executor = cols[4]||'', reqDate = cols[5]||'';
-    const status = (cols[6]||'').trim(), mark = (cols[7]||'').trim().toLowerCase();
-    let rc = '';
-    if (mark === 'red') { rc = 'row-red'; u++; }
-    else if (mark === 'yellow') { rc = 'row-yellow'; w++; }
-    else if (status === '完成') d++;
-    else a++;
-    return `<tr class="${rc}" style="animation-delay:${i*0.04}s">
-      <td class="cell-dim">${i+1}</td>
-      <td class="cell-main">${esc(client)}</td>
-      <td class="cell-main">${esc(item)}</td>
-      <td class="cell-dim">${esc(packDate)}</td>
-      <td class="cell-dim">${esc(delivery)}</td>
-      <td class="cell-dim">${esc(executor)}</td>
-      <td class="cell-dim">${esc(reqDate)}</td>
-      <td>${badge(status)}</td>
-    </tr>`;
-  }).join('');
-  document.getElementById('summary').innerHTML =
-    `<div class="chip">總計 <span class="n" style="color:var(--text)">${rows.length}</span> 筆</div>
-     <div class="chip c-active">進行中 <span class="n">${a}</span></div>
-     <div class="chip c-warn">注意 <span class="n">${w}</span></div>
-     <div class="chip c-urgent">緊急 <span class="n">${u}</span></div>
-     <div class="chip c-done">完成 <span class="n">${d}</span></div>`;
 }
 
 function badge(s) {
