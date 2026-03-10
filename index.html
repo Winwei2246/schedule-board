@@ -39,12 +39,12 @@
   .chip.c-warn .n { color: var(--yellow-text); }
   .chip.c-urgent .n { color: var(--red-text); }
   .chip.c-done .n { color: var(--done-color); }
-  .table-container { flex: 1; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; display: flex; flex-direction: column; }
+  .table-container { flex: 1; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; display: flex; flex-direction: column; min-height: 0; }
   table { width: 100%; border-collapse: collapse; font-size: 15px; }
   thead tr { background: var(--header-bg); border-bottom: 1px solid var(--border-bright); }
   th { padding: 13px 18px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
   th:first-child { padding-left: 22px; }
-  .tbody-wrap { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-bright) transparent; }
+  .tbody-wrap { flex: 1; overflow-y: auto; scrollbar-width: thin; scrollbar-color: var(--border-bright) transparent; scroll-behavior: smooth; }
   .tbody-wrap::-webkit-scrollbar { width: 4px; }
   .tbody-wrap::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; animation: fadeIn 0.4s ease both; }
@@ -67,6 +67,8 @@
   .next-update { display: flex; align-items: center; gap: 6px; }
   .progress-bar { width: 80px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
+  .scroll-indicator { font-size: 10px; color: var(--text-dim); opacity: 0; transition: opacity 0.3s; }
+  .scroll-indicator.visible { opacity: 1; }
   .state-msg { padding: 60px 0; text-align: center; color: var(--text-dim); font-size: 14px; }
   .state-msg .icon { font-size: 32px; margin-bottom: 10px; opacity: 0.4; }
 </style>
@@ -105,7 +107,7 @@
         </tr>
       </thead>
     </table>
-    <div class="tbody-wrap">
+    <div class="tbody-wrap" id="tbody-wrap">
       <table style="width:100%">
         <tbody id="tbody"></tbody>
       </table>
@@ -117,28 +119,37 @@
   </div>
 
   <div class="footer">
-    <div>陸格發包大圖工作表</div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      陸格發包大圖工作表
+      <span class="scroll-indicator" id="scroll-indicator">▼ 自動捲動中</span>
+    </div>
     <div class="next-update">
       下次更新
       <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
-      <span id="countdown">30s</span>
+      <span id="countdown">2m</span>
     </div>
   </div>
 </div>
 
 <script>
-const SHEET_ID = '1271nKJ5MVeji-NtnGRvGQBEYv8614zjGHjd_twl7fyo';
-const SHEET_NAME = encodeURIComponent('工作表1');
 const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRKu2qMbeRi8T9TAB0NMJnQGzjvOihaK1O3k6q0le86p5tg5h7RgB64wCZs78Cd2MkI-2PDbt45h3a4/pub?gid=0&single=true&output=csv';
-const REFRESH_SEC = 30;
+const REFRESH_SEC = 120; // 2 分鐘更新一次
+const SCROLL_INTERVAL = 5000; // 每 5 秒捲動一次
+const SCROLL_STEP = 120; // 每次捲動像素
+
 let countdown = REFRESH_SEC;
+let lastData = null; // 保留上一次成功的資料
+let scrollTimer = null;
+let isScrolling = false;
 
 window.addEventListener('DOMContentLoaded', () => {
   startClock();
   fetchData();
   startRefreshCycle();
+  startAutoScroll();
 });
 
+// ── 時鐘 ──────────────────────────────────────
 function startClock() {
   const wd = ['日','一','二','三','四','五','六'];
   function tick() {
@@ -152,6 +163,7 @@ function startClock() {
   setInterval(tick, 1000);
 }
 
+// ── 更新倒數 ──────────────────────────────────
 function startRefreshCycle() {
   countdown = REFRESH_SEC;
   updateCountdown();
@@ -163,10 +175,34 @@ function startRefreshCycle() {
 }
 
 function updateCountdown() {
-  document.getElementById('countdown').textContent = countdown + 's';
+  const m = Math.floor(countdown / 60);
+  const s = countdown % 60;
+  document.getElementById('countdown').textContent = m > 0 ? `${m}m${s > 0 ? s+'s' : ''}` : `${s}s`;
   document.getElementById('progress-fill').style.width = (countdown / REFRESH_SEC * 100) + '%';
 }
 
+// ── 自動捲動 ──────────────────────────────────
+function startAutoScroll() {
+  scrollTimer = setInterval(() => {
+    const wrap = document.getElementById('tbody-wrap');
+    const maxScroll = wrap.scrollHeight - wrap.clientHeight;
+    if (maxScroll <= 0) {
+      // 不需要捲動（全部都看得到）
+      document.getElementById('scroll-indicator').classList.remove('visible');
+      return;
+    }
+    document.getElementById('scroll-indicator').classList.add('visible');
+    const current = wrap.scrollTop;
+    if (current + wrap.clientHeight >= wrap.scrollHeight - 10) {
+      // 到底了，回到頂部
+      wrap.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      wrap.scrollBy({ top: SCROLL_STEP, behavior: 'smooth' });
+    }
+  }, SCROLL_INTERVAL);
+}
+
+// ── Fetch 資料 ────────────────────────────────
 async function fetchData() {
   const dot = document.getElementById('status-dot');
   try {
@@ -174,15 +210,23 @@ async function fetchData() {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const text = await res.text();
     const rows = parseCSV(text);
+    if (rows.length === 0) throw new Error('empty');
+    lastData = rows; // 成功才更新快取
     dot.className = 'status-dot';
     renderTable(rows);
   } catch(e) {
     dot.className = 'status-dot error';
-    showMsg('⚠ 無法讀取資料，請確認試算表已公開分享');
+    if (lastData) {
+      // 失敗時保留上次資料，不清空畫面
+      renderTable(lastData);
+    } else {
+      showMsg('⚠ 無法讀取資料，請確認試算表已公開分享');
+    }
     console.error(e);
   }
 }
 
+// ── CSV 解析 ──────────────────────────────────
 function parseCSV(text) {
   const rows = [];
   const lines = text.split('\n');
@@ -208,6 +252,7 @@ function splitCSVLine(line) {
   return cols;
 }
 
+// ── 渲染表格 ──────────────────────────────────
 function renderTable(rows) {
   if (!rows.length) { showMsg('尚無資料'); return; }
   document.getElementById('state-msg').style.display = 'none';
