@@ -71,6 +71,7 @@
   .row-yellow td { color: var(--yellow-text); }
   .cell-main { font-weight: 500; font-size: 17px; }
   .cell-dim { color: var(--text-mid); font-size: 15px; }
+  .cell-note { color: var(--text-mid); font-size: 15px; white-space: normal; overflow: visible; text-overflow: clip; }
   .delivery-tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
   .tag-overdue  { background: rgba(100,100,120,0.3); color: #8891b0; }
   .tag-today    { background: rgba(220,50,50,0.25); color: #ff5555; }
@@ -149,9 +150,9 @@
           <th style="width:110px">客戶名稱</th>
           <th>工作項目</th>
           <th style="width:80px">發包日期</th>
-          <th>寄(交)貨日期</th>
+          <th style="width:200px">寄(交)貨日期</th>
           <th style="width:80px">執行人</th>
-          <th style="width:120px">備注</th>
+          <th>備注</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -476,7 +477,7 @@ function renderPage() {
       <td class="cell-dim">${esc(fmtMD(cols[COL.packDate]||''))}</td>
       <td class="cell-dim">${esc(formatDelivery(cols))}${deliveryTag(cols)}</td>
       <td class="cell-dim">${esc(cols[COL.executor]||'')}</td>
-      <td class="cell-dim">${esc(cols[COL.reqDate]||'')}</td>
+      <td class="cell-note">${esc(cols[COL.reqDate]||'')}</td>
     </tr>`;
   }).join('');
   document.getElementById('page-label').textContent = totalPages > 1 ? `${currentPage+1} / ${totalPages}` : '';
