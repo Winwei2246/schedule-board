@@ -55,10 +55,10 @@
   .chip.c-urgent .n { color: var(--red-text); }
   .chip.c-done .n { color: var(--done-color); }
   .table-container { flex: 1; min-height: 0; overflow: hidden; background: var(--panel); border: 1px solid var(--border-bright); border-radius: 10px; overflow-y: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 15px; table-layout: fixed; }
+  table { width: 100%; border-collapse: collapse; font-size: var(--font-main, 15px); table-layout: fixed; }
   thead tr { background: var(--header-bg); border-bottom: 1px solid var(--border-bright); }
   thead { position: sticky; top: 0; z-index: 2; }
-  th { padding: 10px 8px; text-align: left; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
+  th { padding: var(--th-pad, 10px 8px); text-align: left; font-size: var(--font-header, 11px); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-dim); font-weight: 500; white-space: nowrap; font-family: 'Oswald', sans-serif; }
   th:first-child { padding-left: 10px; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.2s; }
   tbody tr:last-child { border-bottom: none; }
@@ -67,14 +67,14 @@
   tbody tr.row-overdue { background: rgba(80,80,90,0.18) !important; border-left: 3px solid rgba(120,120,140,0.4); }
   tbody tr.row-overdue td { color: var(--text-dim); }
   tbody tr.row-yellow { background: var(--yellow-bg) !important; border-left: 3px solid var(--yellow-border); }
-  td { padding: 10px 8px; vertical-align: middle; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  td { padding: var(--td-pad, 10px 8px); vertical-align: middle; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   td:first-child { padding-left: 10px; }
   .row-red td { color: var(--red-text); }
   .row-yellow td { color: var(--yellow-text); }
-  .cell-main { font-weight: 500; font-size: 15px; }
-  .cell-dim { color: var(--text-mid); font-size: 13px; }
-  .cell-note { color: var(--text-mid); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .delivery-tag { display: inline-block; font-size: 10px; padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
+  .cell-main { font-weight: 500; font-size: var(--font-main, 15px); }
+  .cell-dim { color: var(--text-mid); font-size: var(--font-sub, 13px); }
+  .cell-note { color: var(--text-mid); font-size: var(--font-sub, 13px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .delivery-tag { display: inline-block; font-size: var(--font-tag, 10px); padding: 1px 5px; border-radius: 3px; margin-left: 5px; vertical-align: middle; }
   .tag-overdue  { background: rgba(100,100,120,0.3); color: #8891b0; }
   .tag-today    { background: rgba(220,50,50,0.25); color: #ff5555; }
   .tag-tomorrow { background: rgba(220,170,30,0.25); color: #f5c842; }
@@ -167,7 +167,23 @@ const COL_WIDTH = {
   packDate: 52,   // 發包日期
   delivery: 210,  // 寄(交)貨日期
   executor: 52,   // 執行人
-  note:     210,  // 備注
+  note:     190,  // 備注
+};
+
+// ── 行高設定（px）────────────────────────────
+const ROW_HEIGHT = {
+  thPadY:   10,   // 表頭上下內距，加大→表頭變高
+  thPadX:   8,    // 表頭左右內距
+  tdPadY:   10,   // 資料列上下內距，加大→每行變高
+  tdPadX:   8,    // 資料列左右內距
+};
+
+// ── 字體大小設定（px）────────────────────────
+const FONT_SIZE = {
+  main:     22,   // 客戶名稱、工作項目
+  sub:      18,   // 編號、日期、執行人、備注
+  header:   11,   // 表頭標題
+  tag:      10,   // 今天到期、已逾期 等標籤
 };
 
 // 欄位索引
@@ -184,6 +200,15 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('th-delivery').style.width = COL_WIDTH.delivery + 'px';
   document.getElementById('th-executor').style.width = COL_WIDTH.executor + 'px';
   document.getElementById('th-note').style.width = COL_WIDTH.note + 'px';
+
+  // 套用行高與字體大小
+  const s = document.documentElement.style;
+  s.setProperty('--th-pad', ROW_HEIGHT.thPadY + 'px ' + ROW_HEIGHT.thPadX + 'px');
+  s.setProperty('--td-pad', ROW_HEIGHT.tdPadY + 'px ' + ROW_HEIGHT.tdPadX + 'px');
+  s.setProperty('--font-main', FONT_SIZE.main + 'px');
+  s.setProperty('--font-sub', FONT_SIZE.sub + 'px');
+  s.setProperty('--font-header', FONT_SIZE.header + 'px');
+  s.setProperty('--font-tag', FONT_SIZE.tag + 'px');
 
   fetchData();
   startRefreshCycle();
