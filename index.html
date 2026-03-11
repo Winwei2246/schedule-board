@@ -8,6 +8,7 @@
 <meta http-equiv="Expires" content="0">
 <title>工作排程看板</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
 <style>
   :root {
     /* ── 背景 ── */
@@ -121,7 +122,18 @@
   .news-dot.active { background: var(--accent); }
   .page-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--border-bright); transition: all 0.3s; }
   .page-dot.active { background: var(--accent); width: 18px; border-radius: 3px; }
-  .footer { flex-shrink: 0; display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; padding: 2px 2px; height: 20px; }
+  .footer { flex-shrink: 0; display: flex; align-items: center; font-size: 13px; color: var(--text-dim); letter-spacing: 0.05em; padding: 4px 8px; height: 32px; gap: 16px; }
+  .footer-left { display: flex; align-items: center; gap: 6px; white-space: nowrap; flex-shrink: 0; }
+  .footer-datetime { font-family: 'Oswald', sans-serif; font-size: 14px; color: var(--text); letter-spacing: 0.04em; }
+  .footer-weather { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+  .footer-weather .wi { font-size: 16px; }
+  .footer-weather-text { font-size: 13px; color: var(--text); }
+  .footer-news { flex: 1; min-width: 0; overflow: hidden; display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.2); border-radius: 4px; padding: 2px 8px; }
+  .footer-news-label { font-size: 10px; color: var(--accent); font-family: 'Oswald', sans-serif; letter-spacing: 0.08em; white-space: nowrap; flex-shrink: 0; }
+  .footer-news-marquee { flex: 1; overflow: hidden; white-space: nowrap; }
+  .footer-news-marquee span { display: inline-block; animation: marquee 30s linear infinite; font-size: 13px; color: var(--text-mid); }
+  @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
+  .footer-right { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
   .progress-bar { width: 80px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
   .progress-fill { height: 100%; background: var(--accent); border-radius: 1px; transition: width 1s linear; }
   .page-timer-bar { width: 60px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
@@ -154,17 +166,25 @@
   </div>
 
   <div class="footer">
-    <div style="display:flex;align-items:center;gap:12px;">
-      陸格發包大圖工作表
+    <div class="footer-left">
+      <span class="footer-datetime" id="footer-datetime">--/--（-）--:--</span>
+    </div>
+    <div class="footer-weather">
+      <i class="wi wi-na" id="footer-weather-icon"></i>
+      <span class="footer-weather-text" id="footer-weather-text">--°C</span>
+    </div>
+    <div class="footer-news">
+      <span class="footer-news-label">即時新聞</span>
+      <div class="footer-news-marquee"><span id="footer-news-text"></span></div>
+    </div>
+    <div class="footer-right">
       <div class="page-dots" id="page-dots"></div>
       <span id="page-label" style="font-size:11px;color:var(--text-dim)"></span>
-    </div>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <div style="display:flex;align-items:center;gap:6px;">
+      <div style="display:flex;align-items:center;gap:4px;">
         換頁
         <div class="page-timer-bar"><div class="page-timer-fill" id="page-timer-fill" style="width:100%"></div></div>
       </div>
-      <div style="display:flex;align-items:center;gap:6px;">
+      <div style="display:flex;align-items:center;gap:4px;">
         更新
         <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:100%"></div></div>
         <span id="countdown">2m</span>
@@ -175,6 +195,8 @@
 
 <script>
 const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2SvTt9UhNXgMOG2ZapZB4H4j7kvjHxOGbGkAvVvbipbYD3L1B52xmf0jGpbZ1-7D12pqLhzbxcph1/pub?gid=0&single=true&output=csv';
+const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=24.9934&longitude=121.5020&current=temperature_2m,weathercode,is_day&timezone=Asia/Taipei';
+const NEWS_RSS = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/zhongwen/trad/rss.xml';
 const REFRESH_SEC = 120;
 const PAGE_SEC = 30;
 const PAGE_SIZE = 10;
@@ -232,6 +254,11 @@ window.addEventListener('DOMContentLoaded', () => {
   fetchData();
   startRefreshCycle();
   startPageCycle();
+  startFooterClock();
+  fetchWeather();
+  fetchNews();
+  setInterval(fetchWeather, 30 * 60 * 1000);
+  setInterval(fetchNews, 15 * 60 * 1000);
   // 每天凌晨 3 點自動重整，確保拿到最新版本
   setInterval(() => {
     if (new Date().getHours() === 3) location.reload();
@@ -260,6 +287,83 @@ function startPageCycle() {
       if (totalPages > 1) { currentPage = (currentPage+1) % totalPages; renderPage(); }
     }
   }, 1000);
+}
+
+// ── Footer 時鐘 ─────────────────────────────
+function startFooterClock() {
+  const wd = ['日','一','二','三','四','五','六'];
+  function tick() {
+    const n = new Date();
+    const mm = String(n.getMonth()+1).padStart(2,'0');
+    const dd = String(n.getDate()).padStart(2,'0');
+    const hh = String(n.getHours()).padStart(2,'0');
+    const mi = String(n.getMinutes()).padStart(2,'0');
+    document.getElementById('footer-datetime').textContent =
+      `${mm}/${dd}（${wd[n.getDay()]}）${hh}:${mi}`;
+  }
+  tick(); setInterval(tick, 1000);
+}
+
+// ── Footer 天氣 ─────────────────────────────
+function weatherInfo(code, isDay) {
+  const d = isDay ? 'day' : 'night';
+  if (code === 0)  return { cls: `wi-${d}-sunny`,       desc: '晴天' };
+  if (code <= 2)   return { cls: `wi-${d}-cloudy`,      desc: '多雲' };
+  if (code === 3)  return { cls: 'wi-cloudy',            desc: '陰天' };
+  if (code <= 49)  return { cls: `wi-${d}-fog`,         desc: '霧' };
+  if (code <= 57)  return { cls: 'wi-sprinkle',          desc: '毛毛雨' };
+  if (code <= 65)  return { cls: 'wi-rain',              desc: '雨天' };
+  if (code <= 67)  return { cls: 'wi-rain-mix',          desc: '凍雨' };
+  if (code <= 77)  return { cls: 'wi-snow',              desc: '雪' };
+  if (code <= 82)  return { cls: 'wi-showers',           desc: '陣雨' };
+  if (code <= 86)  return { cls: 'wi-snow',              desc: '陣雪' };
+  if (code <= 99)  return { cls: 'wi-thunderstorm',      desc: '雷雨' };
+  return { cls: 'wi-na', desc: '未知' };
+}
+
+async function fetchWeather() {
+  try {
+    const res = await fetch(WEATHER_URL);
+    const data = await res.json();
+    const cur = data.current;
+    const info = weatherInfo(cur.weathercode, cur.is_day === 1);
+    document.getElementById('footer-weather-icon').className = `wi ${info.cls}`;
+    document.getElementById('footer-weather-text').textContent =
+      `${Math.round(cur.temperature_2m)}°C ${info.desc}`;
+  } catch(e) {
+    document.getElementById('footer-weather-text').textContent = '--°C';
+    console.error('weather error', e);
+  }
+}
+
+// ── Footer 新聞跑馬燈 ───────────────────────
+let newsTitles = [];
+let newsIndex = 0;
+
+async function fetchNews() {
+  try {
+    const res = await fetch(NEWS_RSS + '&t=' + Date.now());
+    const data = await res.json();
+    if (data.status !== 'ok' || !data.items?.length) return;
+    newsTitles = data.items.slice(0, 10).map(i => i.title);
+    newsIndex = 0;
+    showNextNews();
+    if (!window._newsTimer) {
+      window._newsTimer = setInterval(showNextNews, 30000);
+    }
+  } catch(e) {
+    console.error('news error', e);
+  }
+}
+
+function showNextNews() {
+  if (!newsTitles.length) return;
+  const el = document.getElementById('footer-news-text');
+  el.textContent = newsTitles[newsIndex];
+  el.style.animation = 'none';
+  el.offsetHeight;
+  el.style.animation = '';
+  newsIndex = (newsIndex + 1) % newsTitles.length;
 }
 
 // ── 日期工具 ─────────────────────────────────
