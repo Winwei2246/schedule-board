@@ -8,7 +8,6 @@
 <meta http-equiv="Expires" content="0">
 <title>工作排程看板</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=Oswald:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
 <style>
   :root {
     --bg: #0a0c10; --panel: #111318; --border: #1e2230; --border-bright: #2a3050;
@@ -154,11 +153,9 @@
 
 <script>
 const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2SvTt9UhNXgMOG2ZapZB4H4j7kvjHxOGbGkAvVvbipbYD3L1B52xmf0jGpbZ1-7D12pqLhzbxcph1/pub?gid=0&single=true&output=csv';
-const WEATHER_URL = 'https://api.open-meteo.com/v1/forecast?latitude=24.9934&longitude=121.5020&current=temperature_2m,weathercode,is_day&timezone=Asia/Taipei';
 const REFRESH_SEC = 120;
 const PAGE_SEC = 10;
 const PAGE_SIZE = 10;
-const WEATHER_REFRESH_MS = 30 * 60 * 1000; // 30 分鐘
 
 // 欄位索引
 const COL = { client:0, item:1, packDate:2, delivery:3, deliveryTime:4, executor:5, reqDate:6, status:7, mark:8 };
@@ -167,50 +164,14 @@ let countdown = REFRESH_SEC, pageSec = PAGE_SEC;
 let lastData = null, allRows = [], currentPage = 0, totalPages = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
-  startClock();
   fetchData();
-  fetchWeather();
-  fetchNews();
   startRefreshCycle();
   startPageCycle();
-  setInterval(fetchWeather, WEATHER_REFRESH_MS);
-  setInterval(fetchNews, 15 * 60 * 1000);
-  adjustRowHeight();
-  window.addEventListener('resize', adjustRowHeight);
   // 每天凌晨 3 點自動重整，確保拿到最新版本
   setInterval(() => {
     if (new Date().getHours() === 3) location.reload();
   }, 60 * 60 * 1000);
 });
-
-// ── 自動調整列高，讓 PAGE_SIZE 列剛好填滿表格區 ──
-function adjustRowHeight() {
-  // tbody-wrap 是 flex:1 的容器，量它的實際高度
-  const wrap = document.querySelector('.tbody-wrap');
-  if (!wrap) return;
-  const available = wrap.clientHeight;
-  // thead 高度（固定）
-  const thead = document.querySelector('thead tr');
-  const theadH = thead ? thead.getBoundingClientRect().height : 44;
-  // 每列可用高度
-  const rowH = Math.floor((available) / PAGE_SIZE);
-  // font-size 15px，line-height 1.4 = 21px，上下各留 padding
-  const py = Math.max(4, Math.floor((rowH - 21) / 2));
-  document.documentElement.style.setProperty('--row-py', py + 'px');
-}
-
-// ── 時鐘 ──────────────────────────────────────
-function startClock() {
-  const wd = ['日','一','二','三','四','五','六'];
-  function tick() {
-    const n = new Date();
-    document.getElementById('clock').textContent =
-      [n.getHours(), n.getMinutes(), n.getSeconds()].map(x => String(x).padStart(2,'0')).join(':');
-    document.getElementById('date-label').textContent =
-      `${n.getFullYear()}/${String(n.getMonth()+1).padStart(2,'0')}/${String(n.getDate()).padStart(2,'0')} （${wd[n.getDay()]}）`;
-  }
-  tick(); setInterval(tick, 1000);
-}
 
 // ── 倒數計時 ──────────────────────────────────
 function startRefreshCycle() {
@@ -236,103 +197,7 @@ function startPageCycle() {
   }, 1000);
 }
 
-// ── 天氣 ──────────────────────────────────────
-// WMO weathercode → { wi class, 中文描述, 顏色 }
-function weatherInfo(code, isDay) {
-  const d = isDay ? 'day' : 'night';
-  if (code === 0)           return { cls: `wi-${d}-sunny`,            desc: '晴天',   color: '#f5c842' };
-  if (code <= 2)            return { cls: `wi-${d}-cloudy`,           desc: '多雲',   color: '#90a0c0' };
-  if (code === 3)           return { cls: `wi-cloudy`,                desc: '陰天',   color: '#7080a0' };
-  if (code <= 49)           return { cls: `wi-${d}-fog`,              desc: '霧',     color: '#8090b0' };
-  if (code <= 57)           return { cls: `wi-sprinkle`,              desc: '毛毛雨', color: '#4a9eff' };
-  if (code <= 65)           return { cls: `wi-rain`,                  desc: '雨天',   color: '#4a9eff' };
-  if (code <= 67)           return { cls: `wi-rain-mix`,              desc: '凍雨',   color: '#80c0ff' };
-  if (code <= 77)           return { cls: `wi-snow`,                  desc: '雪',     color: '#c0e0ff' };
-  if (code <= 82)           return { cls: `wi-showers`,               desc: '陣雨',   color: '#4a9eff' };
-  if (code <= 86)           return { cls: `wi-snow`,                  desc: '陣雪',   color: '#c0e0ff' };
-  if (code <= 99)           return { cls: `wi-thunderstorm`,          desc: '雷雨',   color: '#f5c842' };
-  return { cls: 'wi-na', desc: '未知', color: '#525a7a' };
-}
-
-async function fetchWeather() {
-  try {
-    const res = await fetch(WEATHER_URL);
-    const data = await res.json();
-    const cur = data.current;
-    const isDay = cur.is_day === 1;
-    const info = weatherInfo(cur.weathercode, isDay);
-    document.getElementById('weather-icon').className = `wi ${info.cls} weather-icon`;
-    document.getElementById('weather-icon').style.color = info.color;
-    document.getElementById('weather-temp').textContent = `${Math.round(cur.temperature_2m)}°C`;
-    document.getElementById('weather-desc').textContent = info.desc;
-  } catch(e) {
-    document.getElementById('weather-desc').textContent = '無法取得';
-    console.error('weather error', e);
-  }
-}
-
-// ── 新聞垂直切換 ─────────────────────────────
-const NEWS_RSS = 'https://api.rss2json.com/v1/api.json?rss_url=https://feeds.bbci.co.uk/zhongwen/trad/rss.xml';
-const NEWS_INTERVAL = 30000; // 每則停留 30 秒
-let newsTitles = [];
-let newsIndex = 0;
-let newsTimer = null;
-let newsActive = 'b'; // 目前顯示中的 div，'a' 或 'b'
-
-async function fetchNews() {
-  try {
-    const res = await fetch(NEWS_RSS + '&t=' + Date.now());
-    const data = await res.json();
-    if (data.status !== 'ok' || !data.items?.length) return;
-    newsTitles = data.items.slice(0, 10).map(i => i.title);
-    newsIndex = 0;
-    renderNewsDots();
-    showNewsTitle(newsIndex, false);
-    if (newsTimer) clearInterval(newsTimer);
-    newsTimer = setInterval(() => {
-      newsIndex = (newsIndex + 1) % newsTitles.length;
-      showNewsTitle(newsIndex);
-      renderNewsDots();
-    }, NEWS_INTERVAL);
-  } catch(e) {
-    console.error('news error', e);
-  }
-}
-
-function showNewsTitle(idx, animate = true) {
-  if (!newsTitles.length) return;
-  const elA = document.getElementById('news-a');
-  const elB = document.getElementById('news-b');
-  const incoming = newsActive === 'b' ? elA : elB;
-  const outgoing  = newsActive === 'b' ? elB : elA;
-
-  incoming.textContent = newsTitles[idx];
-
-  if (!animate) {
-    // 第一次載入：直接顯示，不播動畫
-    outgoing.className  = 'news-title hidden-above';
-    incoming.className  = 'news-title visible';
-  } else {
-    // 把 incoming 放到下方待機，強制 reflow 後再同步觸發
-    incoming.className  = 'news-title hidden-below';
-    incoming.getBoundingClientRect(); // force reflow
-    outgoing.className  = 'news-title hidden-above';
-    incoming.className  = 'news-title visible';
-  }
-
-  newsActive = newsActive === 'b' ? 'a' : 'b';
-}
-
-function renderNewsDots() {
-  const c = document.getElementById('news-dots');
-  if (!c || !newsTitles.length) return;
-  c.innerHTML = newsTitles.map((_, i) =>
-    `<div class="news-dot ${i === newsIndex ? 'active' : ''}"></div>`
-  ).join('');
-}
-
-
-// 把 yyyy/m/d 或 yyyy-m-d 轉為 M/D 顯示
+// ── 日期工具 ─────────────────────────────────
 function fmtMD(str) {
   if (!str || !str.trim()) return '';
   const m = str.trim().match(/^\d{4}[\/\-](\d{1,2})[\/\-](\d{1,2})/);
@@ -403,7 +268,6 @@ function formatDelivery(cols) {
 
 // ── Fetch 資料 ────────────────────────────────
 async function fetchData() {
-  const dot = document.getElementById('status-dot');
   try {
     const res = await fetch(PUB_CSV_URL + '&t=' + Date.now());
     if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -422,10 +286,8 @@ async function fetchData() {
     lastData = rows; allRows = rows;
     totalPages = Math.ceil(allRows.length / PAGE_SIZE);
     currentPage = 0;
-    dot.className = 'status-dot';
-    updateSummary(rows); updateDots(); renderPage();
+    updateDots(); renderPage();
   } catch(e) {
-    dot.className = 'status-dot error';
     if (lastData) { allRows = lastData; renderPage(); }
     else showMsg('⚠ 無法讀取資料');
     console.error(e);
@@ -464,26 +326,6 @@ function updateDots() {
     `<div class="page-dot ${i===currentPage?'active':''}"></div>`).join('');
 }
 
-function updateSummary(rows) {
-  let a=0, w=0, u=0, d=0;
-  rows.forEach(cols => {
-    const color = getRowColor(cols);
-    const status = (cols[COL.status]||'').trim();
-    if (status === '完成') d++;
-    else if (status === '取消') {}
-    else if (color === 'overdue') {} // 逾期不計入緊急
-    else if (color === 'red') u++;
-    else if (color === 'yellow') w++;
-    else a++;
-  });
-  document.getElementById('summary').innerHTML =
-    `<div class="chip">總計 <span class="n" style="color:var(--text)">${rows.length}</span> 筆</div>
-     <div class="chip c-active">進行中 <span class="n">${a}</span></div>
-     <div class="chip c-warn">注意 <span class="n">${w}</span></div>
-     <div class="chip c-urgent">緊急 <span class="n">${u}</span></div>
-     <div class="chip c-done">完成 <span class="n">${d}</span></div>`;
-}
-
 function parseCSV(text) {
   const rows = [];
   const lines = text.split('\n');
@@ -519,7 +361,6 @@ function showMsg(text) {
   document.getElementById('state-text').textContent = text;
   document.getElementById('state-msg').style.display = 'block';
   document.getElementById('tbody').innerHTML = '';
-  document.getElementById('summary').innerHTML = '';
 }
 
 function esc(s) {
