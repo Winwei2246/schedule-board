@@ -114,13 +114,13 @@
     <table id="main-table">
       <thead>
         <tr>
-          <th style="width:32px">#</th>
-          <th style="width:68px">客戶</th>
+          <th id="th-no">#</th>
+          <th id="th-client">客戶</th>
           <th>工作項目</th>
-          <th style="width:52px">發包</th>
-          <th style="width:200px">寄(交)貨日期</th>
-          <th style="width:52px">執行</th>
-          <th style="width:190px">備注</th>
+          <th id="th-packDate">發包</th>
+          <th id="th-delivery">寄(交)貨日期</th>
+          <th id="th-executor">執行</th>
+          <th id="th-note">備注</th>
         </tr>
       </thead>
       <tbody id="tbody"></tbody>
@@ -157,6 +157,19 @@ const REFRESH_SEC = 120;
 const PAGE_SEC = 30;
 const PAGE_SIZE = 10;
 
+// ── 欄位寬度設定（px）─────────────────────────
+// 只改數字即可，工作項目自動填滿剩餘空間
+// 目前合計 = 35 + 70 + 52 + 210 + 52 + 190 = 609px
+// 螢幕 1920px − 609px = 約 1311px 給工作項目
+const COL_WIDTH = {
+  no:       35,   // # 編號
+  client:   70,   // 客戶名稱
+  packDate: 52,   // 發包日期
+  delivery: 210,  // 寄(交)貨日期
+  executor: 52,   // 執行人
+  note:     190,  // 備注
+};
+
 // 欄位索引
 const COL = { client:0, item:1, packDate:2, delivery:3, deliveryTime:4, executor:5, reqDate:6, status:7, mark:8 };
 
@@ -164,6 +177,14 @@ let countdown = REFRESH_SEC, pageSec = PAGE_SEC;
 let lastData = null, allRows = [], currentPage = 0, totalPages = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
+  // 套用欄位寬度
+  document.getElementById('th-no').style.width = COL_WIDTH.no + 'px';
+  document.getElementById('th-client').style.width = COL_WIDTH.client + 'px';
+  document.getElementById('th-packDate').style.width = COL_WIDTH.packDate + 'px';
+  document.getElementById('th-delivery').style.width = COL_WIDTH.delivery + 'px';
+  document.getElementById('th-executor').style.width = COL_WIDTH.executor + 'px';
+  document.getElementById('th-note').style.width = COL_WIDTH.note + 'px';
+
   fetchData();
   startRefreshCycle();
   startPageCycle();
