@@ -138,10 +138,8 @@
     <table id="main-table">
       <thead>
         <tr>
-          <th id="th-no">#</th>
           <th id="th-client">客戶</th>
           <th>工作項目</th>
-          <th id="th-packDate">發包</th>
           <th id="th-delivery">寄(交)貨日期</th>
           <th id="th-executor">執行</th>
           <th id="th-note">備注</th>
@@ -183,12 +181,10 @@ const PAGE_SIZE = 10;
 
 // ── 欄位寬度設定（px）─────────────────────────
 // 只改數字即可，工作項目自動填滿剩餘空間
-// 目前合計 = 35 + 70 + 52 + 210 + 52 + 190 = 609px
-// 螢幕 1920px − 609px = 約 1311px 給工作項目
+// 目前合計 = 85 + 260 + 52 + 210 = 607px
+// 螢幕 1920px − 607px = 約 1313px 給工作項目
 const COL_WIDTH = {
-  no:       42,   // # 編號
   client:   85,   // 客戶名稱
-  packDate: 55,   // 發包日期
   delivery: 260,  // 寄(交)貨日期
   executor: 52,   // 執行人
   note:     210,  // 備注
@@ -198,7 +194,7 @@ const COL_WIDTH = {
 const ROW_HEIGHT = {
   thPadY:   10,   // 表頭上下內距，加大→表頭變高
   thPadX:   8,    // 表頭左右內距
-  tdPadY:   12,   // 資料列上下內距，加大→每行變高
+  tdPadY:   10.5,   // 資料列上下內距，加大→每行變高
   tdPadX:   8,    // 資料列左右內距
 };
 
@@ -218,9 +214,7 @@ let lastData = null, allRows = [], currentPage = 0, totalPages = 1;
 
 window.addEventListener('DOMContentLoaded', () => {
   // 套用欄位寬度
-  document.getElementById('th-no').style.width = COL_WIDTH.no + 'px';
   document.getElementById('th-client').style.width = COL_WIDTH.client + 'px';
-  document.getElementById('th-packDate').style.width = COL_WIDTH.packDate + 'px';
   document.getElementById('th-delivery').style.width = COL_WIDTH.delivery + 'px';
   document.getElementById('th-executor').style.width = COL_WIDTH.executor + 'px';
   document.getElementById('th-note').style.width = COL_WIDTH.note + 'px';
@@ -385,10 +379,8 @@ function renderPage() {
     const color = getRowColor(cols);
     const rc = color === 'red' ? 'row-red' : color === 'yellow' ? 'row-yellow' : color === 'overdue' ? 'row-overdue' : '';
     return `<tr class="${rc}" style="animation-delay:${i*0.03}s">
-      <td class="cell-dim">${start+i+1}</td>
       <td class="cell-main">${esc(cols[COL.client]||'')}</td>
       <td class="cell-main">${esc(cols[COL.item]||'')}</td>
-      <td class="cell-dim">${esc(fmtMD(cols[COL.packDate]||''))}</td>
       <td class="cell-dim">${esc(formatDelivery(cols))}${deliveryTag(cols)}</td>
       <td class="cell-dim">${esc(cols[COL.executor]||'')}</td>
       <td class="cell-note">${esc(cols[COL.reqDate]||'')}</td>
