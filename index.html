@@ -178,14 +178,15 @@ const PUB_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT2SvTt9UhN
 const REFRESH_SEC = 120;
 const PAGE_SEC = 30;
 const PAGE_SIZE = 10;
+const OVERDUE_HIDE_DAYS = 3;  // 逾期超過幾天自動隱藏（0 = 逾期當天就隱藏）
 
 // ── 欄位寬度設定（px）─────────────────────────
 // 只改數字即可，工作項目自動填滿剩餘空間
 // 目前合計 = 85 + 260 + 52 + 210 = 607px
 // 螢幕 1920px − 607px = 約 1313px 給工作項目
 const COL_WIDTH = {
-  client:   90,   // 客戶名稱
-  delivery: 200,  // 寄(交)貨日期
+  client:   85,   // 客戶名稱
+  delivery: 260,  // 寄(交)貨日期
   executor: 52,   // 執行人
   note:     210,  // 備注
 };
@@ -194,7 +195,7 @@ const COL_WIDTH = {
 const ROW_HEIGHT = {
   thPadY:   10,   // 表頭上下內距，加大→表頭變高
   thPadX:   8,    // 表頭左右內距
-  tdPadY:   10.5,   // 資料列上下內距，加大→每行變高
+  tdPadY:   10.6,   // 資料列上下內距，加大→每行變高
   tdPadX:   8,    // 資料列左右內距
 };
 
@@ -356,7 +357,17 @@ async function fetchData() {
       if (da.getTime() !== db.getTime()) return da - db;
       return parseTimeMinutes(a[COL.deliveryTime]) - parseTimeMinutes(b[COL.deliveryTime]);
     });
-    lastData = rows; allRows = rows;
+    // 過濾：逾期超過 OVERDUE_HIDE_DAYS 天的不顯示
+    const t = today();
+    const filtered = rows.filter(cols => {
+      const status = (cols[COL.status]||'').trim();
+      if (status === '完成' || status === '取消') return true; // 完成/取消照常顯示
+      const delivery = parseDateOnly(cols[COL.delivery]);
+      if (!delivery) return true; // 沒有交貨日的照常顯示
+      const diff = Math.round((delivery - t) / 86400000);
+      return diff >= -OVERDUE_HIDE_DAYS; // 逾期超過天數的隱藏
+    });
+    lastData = rows; allRows = filtered;
     totalPages = Math.ceil(allRows.length / PAGE_SIZE);
     currentPage = 0;
     updateDots(); renderPage();
